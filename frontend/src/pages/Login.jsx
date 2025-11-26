@@ -173,12 +173,12 @@ export default function Login(){
         </div>
       </div>
 
-      <motion.div className="auth-card" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
+      <motion.div className="auth-card" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}>
         <div className="auth-header">
           <div className="auth-logo">AI</div>
           <div>
             <p className="eyebrow">{t('app_name')}</p>
-            <h1>{t('login_title')}</h1>
+            <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>{t('login_title')}</h1>
             <p className="lead">{t('login_subtitle')}</p>
           </div>
         </div>
