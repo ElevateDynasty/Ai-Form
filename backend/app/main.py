@@ -572,10 +572,11 @@ async def gemini_generate_form(
         raise HTTPException(status_code=400, detail="Prompt is required")
     
     try:
-        from app.services.gemini_service import GEMINI_AVAILABLE
-        logger.info(f"Gemini generate form called. Prompt: {req.prompt[:50]}... GEMINI_AVAILABLE: {GEMINI_AVAILABLE}")
+        logger.info(f"Gemini generate form called. Prompt: {req.prompt[:50]}...")
         schema = generate_form_schema(req.prompt)
-        return {"schema": schema, "prompt": req.prompt, "source": "gemini" if GEMINI_AVAILABLE else "fallback"}
+        field_count = len(schema.get("fields", []))
+        logger.info(f"Gemini generated {field_count} fields")
+        return {"schema": schema, "prompt": req.prompt, "source": "gemini"}
     except Exception as exc:
         logger.error(f"Gemini form generation failed: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Gemini generation failed: {str(exc)}") from exc

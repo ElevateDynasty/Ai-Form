@@ -1,49 +1,53 @@
 """
 Gemini AI Service for smart form generation and document understanding.
+Uses REST API directly for reliability on resource-constrained servers.
 """
 import json
 import logging
 import os
+import requests
 from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
 
-GEMINI_AVAILABLE = False
-genai = None
-
-try:
-    import google.generativeai as genai_module
-    genai = genai_module
-    GEMINI_AVAILABLE = True
-    logger.info("google-generativeai imported successfully")
-except ImportError as e:
-    logger.warning(f"google-generativeai not installed; Gemini features disabled: {e}")
-except Exception as e:
-    logger.error(f"Error importing google-generativeai: {e}")
-
 # Configure Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyB-Q8a5uf_cnpF9FsI9II57HBVxgVLPG9k")
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
-_model = None
 
-
-def _get_model():
-    """Get or initialize the Gemini model."""
-    global _model, GEMINI_AVAILABLE
-    
-    if not GEMINI_AVAILABLE or genai is None:
-        logger.warning("Gemini not available - package not installed")
+def _call_gemini(prompt: str) -> Optional[str]:
+    """Call Gemini API directly via REST."""
+    try:
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 2048,
+                }
+            },
+            timeout=30
+        )
+        
+        if response.status_code != 200:
+            logger.error(f"Gemini API error {response.status_code}: {response.text}")
+            return None
+            
+        data = response.json()
+        # Extract text from response
+        candidates = data.get("candidates", [])
+        if candidates and candidates[0].get("content", {}).get("parts"):
+            return candidates[0]["content"]["parts"][0].get("text", "")
         return None
         
-    if _model is None:
-        try:
-            genai.configure(api_key=GEMINI_API_KEY)
-            _model = genai.GenerativeModel('gemini-1.5-flash')
-            logger.info("Gemini model initialized successfully")
-        except Exception as e:
-            logger.error(f"Failed to initialize Gemini: {e}")
-            return None
-    return _model
+    except requests.Timeout:
+        logger.error("Gemini API timeout")
+        return None
+    except Exception as e:
+        logger.error(f"Gemini API call failed: {e}")
+        return None
 
 
 def generate_form_schema(prompt: str) -> Dict[str, Any]:
@@ -56,11 +60,6 @@ def generate_form_schema(prompt: str) -> Dict[str, Any]:
     Returns:
         Form schema with fields array
     """
-    model = _get_model()
-    if not model:
-        logger.warning("Gemini unavailable; using fallback")
-        return _fallback_form_generation(prompt)
-    
     system_prompt = """You are a form schema generator. Given a description, create a JSON form schema.
 
 IMPORTANT: Respond ONLY with valid JSON, no markdown, no explanation.
@@ -94,8 +93,13 @@ Make name fields fullWidth: true. Make textarea fields fullWidth: true.
 Add appropriate placeholders for each field."""
 
     try:
-        response = model.generate_content(f"{system_prompt}\n\nUser request: {prompt}")
-        response_text = response.text.strip()
+        response_text = _call_gemini(f"{system_prompt}\n\nUser request: {prompt}")
+        
+        if not response_text:
+            logger.warning("Gemini API returned empty; using fallback")
+            return _fallback_form_generation(prompt)
+        
+        response_text = response_text.strip()
         
         # Clean up response - remove markdown code blocks if present
         if response_text.startswith("```"):
@@ -137,9 +141,6 @@ def enhance_ocr_text(ocr_text: str) -> Dict[str, Any]:
     Returns:
         Dictionary with cleaned text and extracted fields
     """
-    model = _get_model()
-    if not model:
-        return {"cleaned": ocr_text, "fields": {}}
     
     prompt = f"""Analyze this OCR-extracted text and:
 1. Fix any OCR errors, typos, or formatting issues
@@ -160,8 +161,10 @@ OCR Text:
 {ocr_text}"""
 
     try:
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
+        response_text = _call_gemini(prompt)
+        if not response_text:
+            return {"cleaned": ocr_text, "fields": {}}
+        response_text = response_text.strip()
         
         if response_text.startswith("```"):
             lines = response_text.split("\n")
@@ -184,9 +187,6 @@ def analyze_document(document_text: str, form_fields: Optional[List[str]] = None
     Returns:
         Dictionary mapping field names to extracted values
     """
-    model = _get_model()
-    if not model:
-        return {}
     
     fields_hint = ""
     if form_fields:
@@ -207,8 +207,10 @@ Document:
 {document_text}"""
 
     try:
-        response = model.generate_content(prompt)
-        response_text = response.text.strip()
+        response_text = _call_gemini(prompt)
+        if not response_text:
+            return {}
+        response_text = response_text.strip()
         
         if response_text.startswith("```"):
             lines = response_text.split("\n")
@@ -231,10 +233,6 @@ def translate_text_gemini(text: str, target_lang: str = "hi") -> str:
     Returns:
         Translated text
     """
-    model = _get_model()
-    if not model:
-        return text
-    
     lang_names = {
         "hi": "Hindi",
         "en": "English"
@@ -247,8 +245,8 @@ Respond with ONLY the translated text, nothing else.
 Text: {text}"""
 
     try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        response_text = _call_gemini(prompt)
+        return response_text.strip() if response_text else text
     except Exception as e:
         logger.error(f"Gemini translation error: {e}")
         return text
