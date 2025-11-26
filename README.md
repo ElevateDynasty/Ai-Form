@@ -2,14 +2,15 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-gold.svg)
 ![Python](https://img.shields.io/badge/python-3.10+-green.svg)
 ![Node](https://img.shields.io/badge/node-16+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-purple.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Gemini](https://img.shields.io/badge/Gemini-AI%20Powered-blue.svg)
 
-**An intelligent form processing platform with OCR, voice input, and AI-powered text processing.**
+**An elegant, AI-powered form processing platform with OCR, voice input, smart form generation, and bilingual support (English/Hindi).**
 
-[Features](#-key-features) • [Quick Start](#-getting-started) • [API Reference](#-api-reference) • [Contributing](#-contributing)
+[Features](#-key-features) • [Quick Start](#-getting-started) • [API Reference](#-api-reference) • [Contributing](#-contributing) • [License](#-license)
 
 </div>
 
@@ -21,10 +22,13 @@
 |---------|-------------|
 | 📄 **OCR Extraction** | Extract structured fields from PDFs and images automatically |
 | 🎤 **Voice Input** | Browser-based speech-to-text for hands-free form filling |
-| 🔊 **Text-to-Speech** | Convert text to natural audio in multiple languages |
+| 🔊 **Text-to-Speech** | Convert text to natural audio in English & Hindi |
 | 🤖 **AI Text Processing** | Clean, summarize, and extract key phrases using tinyBART |
+| ✨ **Gemini AI Integration** | Smart form generation from natural language prompts |
+| 🌐 **Bilingual Support** | Full English/Hindi translation throughout the app |
 | 📝 **Visual Form Builder** | Admin interface to create and manage form templates |
 | 📑 **PDF Auto-Fill** | Merge JSON data with fillable PDF templates |
+| 🎨 **Old Money Theme** | Elegant, luxurious UI with gold accents & refined typography |
 | ♿ **Accessibility Mode** | High-contrast UI with enhanced voice navigation |
 
 ## 🏗️ Architecture
@@ -41,12 +45,14 @@ AI-FORM/
 │   │       ├── tts_service.py    # Text-to-speech
 │   │       ├── bart_service.py   # AI text processing
 │   │       ├── pdf_service.py    # PDF operations
-│   │       └── llm_service.py    # LLM integrations
+│   │       ├── llm_service.py    # LLM integrations
+│   │       └── gemini_service.py # Gemini AI for smart generation
 │   └── requirements.txt
 │
 ├── frontend/                   # React + Vite frontend
 │   ├── src/
 │   │   ├── App.jsx            # Main layout & routing
+│   │   ├── LanguageContext.jsx # Bilingual (EN/HI) support
 │   │   ├── pages/             # Page components
 │   │   │   ├── OCRPage.jsx       # Document extraction
 │   │   │   ├── AudioPage.jsx     # Voice features
@@ -55,9 +61,10 @@ AI-FORM/
 │   │   │   ├── PdfFillPage.jsx   # PDF merging
 │   │   │   ├── AdminFormsPage.jsx # Template management
 │   │   │   └── Login.jsx         # Authentication
-│   │   └── styles.css         # Global design system
+│   │   └── styles.css         # Old Money design system
 │   └── package.json
 │
+├── LICENSE                     # MIT License
 └── README.md
 ```
 
@@ -133,6 +140,14 @@ npm run dev
 | `/api/llm/clean` | POST | Clean and normalize text |
 | `/api/llm/summarize` | POST | Summarize long text |
 | `/api/llm/key_phrases` | POST | Extract key phrases |
+| `/api/llm/translate` | POST | Translate between English ↔ Hindi |
+
+### Gemini AI (Smart Generation)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/gemini/generate-form` | POST | Generate form schema from natural language prompt |
+| `/api/gemini/enhance-text` | POST | AI-powered text enhancement |
 
 ### Form Management
 
@@ -165,11 +180,18 @@ curl -X POST "http://localhost:8000/api/pdf/fill" \
 
 ## 🎨 UI Features
 
-### Design System
-- Modern gradient backgrounds with glass morphism effects
-- Responsive grid layouts for all screen sizes
-- Animated transitions and loading states
-- Badge system for status indicators
+### Old Money Design System
+- Elegant warm cream backgrounds (#faf9f7)
+- Rich gold accents (#b8956e, #c4a97d)
+- Playfair Display serif typography for headings
+- Refined hover animations with gold shadows
+- Luxurious glass morphism effects
+
+### Bilingual Support
+Full English/Hindi translation across the entire app:
+- Toggle language in the header
+- All labels, buttons, and messages translated
+- Hindi text-to-speech support
 
 ### Accessibility Mode
 Toggle high-contrast mode for improved visibility:
@@ -210,6 +232,8 @@ The services in `backend/app/services/` are designed to be swappable:
 | OCR | PyPDF2 + basic parsing | Tesseract, Google Vision, AWS Textract |
 | TTS | gTTS | Azure Speech, ElevenLabs |
 | AI/LLM | tinyBART (local) | OpenAI GPT, Anthropic Claude |
+| Smart Gen | Gemini 1.5 Flash | GPT-4, Claude |
+| Translation | Helsinki-NLP opus-mt | Google Translate, DeepL |
 | STT | Browser Web Speech API | Whisper, Azure Speech |
 
 ## 🧪 Development
@@ -253,7 +277,19 @@ npm test
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+```
+MIT License
+
+Copyright (c) 2025 ElevateDynasty
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software...
+```
 
 ## 📬 Contact
 
