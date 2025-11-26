@@ -63,6 +63,8 @@ export default function AdminFormsPage(){
   const [promptText, setPromptText] = useState("");
   const [promptLoading, setPromptLoading] = useState(false);
   const [promptStatus, setPromptStatus] = useState("");
+  const [geminiLoading, setGeminiLoading] = useState(false);
+  const [geminiStatus, setGeminiStatus] = useState("");
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -92,6 +94,7 @@ export default function AdminFormsPage(){
     setIngestStatus("");
     setPromptText("");
     setPromptStatus("");
+    setGeminiStatus("");
   };
 
   async function handleSubmit(e){
@@ -192,6 +195,7 @@ export default function AdminFormsPage(){
     setIngestStatus("");
     setPromptText("");
     setPromptStatus("");
+    setGeminiStatus("");
     setStatus(""); setError("");
   };
 
@@ -323,6 +327,41 @@ export default function AdminFormsPage(){
     setPromptLoading(false);
   };
 
+  const handleGeminiGenerate = async () => {
+    if (!promptText.trim()) {
+      setError("Enter a prompt to generate form");
+      return;
+    }
+    setError("");
+    setGeminiStatus("🤖 Gemini AI is generating your form...");
+    setGeminiLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/gemini/generate-form`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ prompt: promptText }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Unable to generate form with Gemini" }));
+        throw new Error(err.detail || "Unable to generate form with Gemini");
+      }
+      const data = await res.json();
+      const schema = data.schema || {};
+      const normalized = normalizeSchema(schema);
+      setFormState(prev => ({
+        ...prev,
+        fields: normalized.fields,
+        meta: normalized.meta,
+      }));
+      setGeminiStatus(`✨ Generated ${normalized.fields.length} fields with Gemini AI`);
+      setPromptStatus("");
+    } catch (err) {
+      setError(err.message);
+      setGeminiStatus("Gemini generation failed");
+    }
+    setGeminiLoading(false);
+  };
+
   const handleTranslate = async (text, callback) => {
     if (!text || !text.trim()) return;
     try {
@@ -432,39 +471,54 @@ export default function AdminFormsPage(){
 
           {/* Prompt Generation */}
           <div style={{ 
-            background: "linear-gradient(135deg, #fff1f2 0%, #fff7ed 100%)", 
+            background: "linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)", 
             borderRadius: 16, 
             padding: 20, 
             marginBottom: 24,
-            border: "1px solid rgba(244,63,94,0.15)"
+            border: "1px solid rgba(16,185,129,0.2)"
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <h4 style={{ margin: 0, fontSize: 15 }}>✨ Generate from Prompt</h4>
-              {promptLoading && <span className="badge warning animate-pulse">Generating...</span>}
+              <h4 style={{ margin: 0, fontSize: 15 }}>🤖 AI Smart Form Generation</h4>
+              {(promptLoading || geminiLoading) && <span className="badge warning animate-pulse">Generating...</span>}
             </div>
             <p className="muted" style={{ fontSize: 13, marginBottom: 14 }}>
-              Describe the form you want to create, and AI will build it for you.
+              Describe the form you want in plain English. Gemini AI will create comprehensive fields automatically.
             </p>
-            <div style={{ display: "flex", gap: 10 }}>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <input
                 type="text"
                 value={promptText}
                 onChange={(e) => setPromptText(e.target.value)}
-                placeholder="e.g., Create a registration form with name, email, phone and address"
-                disabled={promptLoading}
-                style={{ flex: 1 }}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handlePromptGenerate())}
+                placeholder="e.g., Create a job application form with personal details, experience, and skills"
+                disabled={promptLoading || geminiLoading}
+                style={{ flex: 1, minWidth: 250 }}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleGeminiGenerate())}
               />
               <button 
                 type="button" 
-                className="btn btn-primary" 
+                className="btn"
+                style={{ 
+                  background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                  color: "white",
+                  border: "none"
+                }}
+                onClick={handleGeminiGenerate}
+                disabled={geminiLoading}
+              >
+                ✨ AI Generate (Gemini)
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-ghost" 
                 onClick={handlePromptGenerate}
                 disabled={promptLoading}
+                title="Basic keyword-based generation"
               >
-                Generate
+                Basic
               </button>
             </div>
-            {promptStatus && <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>{promptStatus}</p>}
+            {geminiStatus && <p style={{ fontSize: 13, marginTop: 12, color: "#059669" }}>{geminiStatus}</p>}
+            {promptStatus && !geminiStatus && <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>{promptStatus}</p>}
           </div>
 
           {/* Document Import */}

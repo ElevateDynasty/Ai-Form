@@ -25,6 +25,7 @@ from .services.llm_service import clean_text, generate_form_from_prompt
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
 from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases, translate_text
+from .services.gemini_service import generate_form_schema, enhance_ocr_text, analyze_document, translate_text_gemini
 
 
 app = FastAPI(title="AI Universal Form Assistant")
@@ -538,4 +539,81 @@ async def llm_translate(req: TranslateRequest):
         return {"original": req.text, "translated": translated, "lang": req.target_lang}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(exc)}") from exc
+
+
+# ==================== GEMINI AI ENDPOINTS ====================
+
+class GeminiFormRequest(BaseModel):
+    prompt: str
+
+
+class GeminiOcrRequest(BaseModel):
+    text: str
+
+
+class GeminiDocumentRequest(BaseModel):
+    text: str
+    fields: list[str] | None = None
+
+
+class GeminiTranslateRequest(BaseModel):
+    text: str
+    target_lang: str = "hi"
+
+
+@app.post("/api/gemini/generate-form")
+async def gemini_generate_form(
+    req: GeminiFormRequest,
+    authorization: str | None = Header(default=None),
+):
+    """Generate a complete form schema from natural language using Gemini AI."""
+    _require_admin(authorization)
+    if not req.prompt:
+        raise HTTPException(status_code=400, detail="Prompt is required")
+    
+    try:
+        schema = generate_form_schema(req.prompt)
+        return {"schema": schema, "prompt": req.prompt, "source": "gemini"}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/gemini/enhance-ocr")
+async def gemini_enhance_ocr(req: GeminiOcrRequest):
+    """Use Gemini to clean OCR output and extract structured data."""
+    if not req.text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    
+    try:
+        result = enhance_ocr_text(req.text)
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/gemini/analyze-document")
+async def gemini_analyze_document(req: GeminiDocumentRequest):
+    """Analyze a document and extract field values using Gemini AI."""
+    if not req.text:
+        raise HTTPException(status_code=400, detail="Document text is required")
+    
+    try:
+        fields = analyze_document(req.text, req.fields)
+        return {"fields": fields}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@app.post("/api/gemini/translate")
+async def gemini_translate(req: GeminiTranslateRequest):
+    """Translate text using Gemini AI for high-quality translations."""
+    if not req.text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    
+    try:
+        translated = translate_text_gemini(req.text, req.target_lang)
+        return {"original": req.text, "translated": translated, "lang": req.target_lang}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
 

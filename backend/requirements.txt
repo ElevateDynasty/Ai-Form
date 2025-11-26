@@ -13,3 +13,4 @@ Pillow
 gTTS
 transformers
 torch
+google-generativeai
