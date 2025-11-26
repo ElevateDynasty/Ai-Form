@@ -79,6 +79,16 @@ def on_startup():
     init_db(Base)
 
 
+@app.get("/")
+async def root():
+    """Root endpoint - redirects to API docs or shows welcome message."""
+    return {
+        "message": "AI Universal Form Assistant API",
+        "docs": "/docs",
+        "health": "/api/health"
+    }
+
+
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
