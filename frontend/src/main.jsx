@@ -88,10 +88,10 @@ function Dashboard(){
           background: "linear-gradient(90deg, transparent, #b8956e, #c4a97d, #b8956e, transparent)"
         }} />
         <p className="eyebrow" style={{ color: "#c4a97d", fontWeight: 600, letterSpacing: "0.15em" }}>{t("app_name")}</p>
-        <h2 style={{ fontSize: 30, fontWeight: 700, margin: "10px 0 14px", letterSpacing: "-0.5px", fontFamily: "'Playfair Display', Georgia, serif" }}>
+        <h2 style={{ fontSize: 30, fontWeight: 700, margin: "10px 0 14px", letterSpacing: "-0.5px", fontFamily: "'Playfair Display', Georgia, serif", color: "#faf9f7" }}>
           {t("welcome_title")}
         </h2>
-        <p style={{ opacity: 0.85, maxWidth: 600, marginBottom: 28, lineHeight: 1.7, fontStyle: "italic" }}>
+        <p style={{ color: "#d4cfc7", maxWidth: 600, marginBottom: 28, lineHeight: 1.7, fontStyle: "italic", fontSize: 15 }}>
           {t("welcome_subtitle")}
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
