@@ -353,11 +353,13 @@ export default function AdminFormsPage(){
         fields: normalized.fields,
         meta: normalized.meta,
       }));
-      setGeminiStatus(`✨ Generated ${normalized.fields.length} fields with Gemini AI`);
+      const sourceLabel = data.source === "fallback" ? "keyword" : "Gemini AI";
+      setGeminiStatus(`✨ Generated ${normalized.fields.length} fields with ${sourceLabel}`);
       setPromptStatus("");
     } catch (err) {
-      setError(err.message);
-      setGeminiStatus("Gemini generation failed");
+      console.error("Gemini generate error:", err);
+      setError(err.message || "Gemini generation failed");
+      setGeminiStatus("❌ Gemini generation failed - try keyword Generate");
     }
     setGeminiLoading(false);
   };

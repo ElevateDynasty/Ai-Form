@@ -6,14 +6,20 @@ import logging
 import os
 from typing import Dict, Any, List, Optional
 
-try:
-    import google.generativeai as genai
-    GEMINI_AVAILABLE = True
-except ImportError:
-    GEMINI_AVAILABLE = False
-    logging.warning("google-generativeai not installed; Gemini features disabled")
-
 logger = logging.getLogger(__name__)
+
+GEMINI_AVAILABLE = False
+genai = None
+
+try:
+    import google.generativeai as genai_module
+    genai = genai_module
+    GEMINI_AVAILABLE = True
+    logger.info("google-generativeai imported successfully")
+except ImportError as e:
+    logger.warning(f"google-generativeai not installed; Gemini features disabled: {e}")
+except Exception as e:
+    logger.error(f"Error importing google-generativeai: {e}")
 
 # Configure Gemini API
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyB-Q8a5uf_cnpF9FsI9II57HBVxgVLPG9k")
@@ -23,8 +29,13 @@ _model = None
 
 def _get_model():
     """Get or initialize the Gemini model."""
-    global _model
-    if _model is None and GEMINI_AVAILABLE:
+    global _model, GEMINI_AVAILABLE
+    
+    if not GEMINI_AVAILABLE or genai is None:
+        logger.warning("Gemini not available - package not installed")
+        return None
+        
+    if _model is None:
         try:
             genai.configure(api_key=GEMINI_API_KEY)
             _model = genai.GenerativeModel('gemini-1.5-flash')
