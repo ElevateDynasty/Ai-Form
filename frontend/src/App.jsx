@@ -173,21 +173,28 @@ export default function App(){
                   }} 
                   onClick={() => setShowLangMenu(false)} 
                 />
-                <div style={{
-                  position: "absolute",
-                  top: "100%",
-                  right: 0,
-                  marginTop: 8,
-                  background: "white",
-                  borderRadius: 12,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-                  border: "1px solid rgba(0,0,0,0.08)",
-                  zIndex: 100,
-                  minWidth: 160,
-                  maxHeight: 320,
-                  overflowY: "auto",
-                  padding: 8
-                }}>
+                <motion.div
+                  initial={{ opacity: 0, y: -4, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -4, scale: 0.96 }}
+                  transition={{ duration: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  style={{
+                    position: "absolute",
+                    top: "100%",
+                    right: 0,
+                    marginTop: 8,
+                    background: "white",
+                    borderRadius: 12,
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                    border: "1px solid rgba(0,0,0,0.08)",
+                    zIndex: 100,
+                    minWidth: 160,
+                    maxHeight: 320,
+                    overflowY: "auto",
+                    padding: 8,
+                    transformOrigin: "top right"
+                  }}
+                >
                   {languages.map(lang => (
                     <button
                       key={lang.code}
@@ -208,7 +215,7 @@ export default function App(){
                         cursor: "pointer",
                         fontSize: 14,
                         textAlign: "left",
-                        transition: "background 0.15s"
+                        transition: "background 0.08s ease"
                       }}
                       onMouseEnter={e => {
                         if(language !== lang.code) e.target.style.background = "rgba(0,0,0,0.04)";
@@ -227,7 +234,7 @@ export default function App(){
                       )}
                     </button>
                   ))}
-                </div>
+                </motion.div>
               </>
             )}
           </div>
@@ -304,10 +311,13 @@ export default function App(){
           <motion.section
             key={location.pathname}
             className="page-panel"
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ 
+              duration: 0.12, 
+              ease: [0.16, 1, 0.3, 1]
+            }}
           >
             <Outlet />
           </motion.section>
