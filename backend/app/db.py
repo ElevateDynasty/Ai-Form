@@ -236,10 +236,14 @@ def seed_default_templates():
     
     session = SessionLocal()
     try:
-        # Check if templates already exist
-        existing_count = session.query(FormTemplate).count()
-        if existing_count == 0:
-            for template_data in SEED_TEMPLATES:
+        added = 0
+        for template_data in SEED_TEMPLATES:
+            # Check if template with same title already exists
+            exists = session.query(FormTemplate).filter(
+                FormTemplate.title == template_data["title"]
+            ).first()
+            
+            if not exists:
                 template = FormTemplate(
                     title=template_data["title"],
                     description=template_data["description"],
@@ -247,10 +251,13 @@ def seed_default_templates():
                     created_by="system"
                 )
                 session.add(template)
-            session.commit()
-            print(f"✅ Seeded {len(SEED_TEMPLATES)} default form templates")
+                added += 1
+        
+        session.commit()
+        if added > 0:
+            print(f"✅ Seeded {added} default form templates")
         else:
-            print(f"ℹ️ Database already has {existing_count} templates, skipping seed")
+            print(f"ℹ️ All {len(SEED_TEMPLATES)} default templates already exist")
     except Exception as e:
         session.rollback()
         print(f"⚠️ Error seeding templates: {e}")

@@ -18,7 +18,7 @@ _SESSIONS: Dict[str, Dict[str, str]] = {}
 
 # If these imports fail, make sure the files exist:
 # backend/app/services/ocr_service.py, stt_service.py, llm_service.py, pdf_service.py
-from .db import get_db, init_db
+from .db import get_db, init_db, seed_default_templates, SEED_TEMPLATES
 from .models import Base, FormTemplate, FormResponse
 from .services.ocr_service import extract_fields_from_document, generate_schema_from_document
 from .services.llm_service import clean_text
@@ -92,6 +92,42 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+
+@app.post("/api/admin/seed-templates")
+async def seed_templates(
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """Manually seed pre-defined form templates (admin only)."""
+    _require_admin(authorization)
+    
+    existing_count = db.query(FormTemplate).count()
+    added = 0
+    
+    for template_data in SEED_TEMPLATES:
+        # Check if template with same title already exists
+        exists = db.query(FormTemplate).filter(
+            FormTemplate.title == template_data["title"]
+        ).first()
+        
+        if not exists:
+            template = FormTemplate(
+                title=template_data["title"],
+                description=template_data["description"],
+                schema=json.dumps(template_data["schema"]),
+                created_by="system"
+            )
+            db.add(template)
+            added += 1
+    
+    db.commit()
+    return {
+        "message": f"Seeded {added} new templates",
+        "existing": existing_count,
+        "added": added,
+        "total": existing_count + added
+    }
 
 
 @app.post("/api/auth/login")
