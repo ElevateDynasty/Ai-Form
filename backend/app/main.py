@@ -21,7 +21,7 @@ _SESSIONS: Dict[str, Dict[str, str]] = {}
 from .db import get_db, init_db, seed_default_templates, SEED_TEMPLATES
 from .models import Base, FormTemplate, FormResponse
 from .services.ocr_service import extract_fields_from_document, generate_schema_from_document
-from .services.llm_service import clean_text
+from .services.llm_service import clean_text, generate_form_from_prompt
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
 from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases
@@ -72,6 +72,10 @@ class TextCleanRequest(BaseModel):
 class TextSummaryRequest(BaseModel):
     text: str
     max_length: int = 50
+
+
+class FormGenerationRequest(BaseModel):
+    prompt: str
 
 
 @app.on_event("startup")
@@ -264,6 +268,22 @@ async def ingest_form_template(
         raise HTTPException(status_code=422, detail="Unable to detect fields in the document")
 
     return {"schema": schema, "filename": file.filename}
+
+
+@app.post("/api/forms/generate")
+async def generate_form(
+    req: FormGenerationRequest,
+    authorization: str | None = Header(default=None),
+):
+    _require_admin(authorization)
+    if not req.prompt:
+        raise HTTPException(status_code=400, detail="Prompt is required")
+    
+    try:
+        schema = generate_form_from_prompt(req.prompt)
+        return {"schema": schema, "prompt": req.prompt}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/voice/transcribe")

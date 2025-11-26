@@ -78,7 +78,7 @@ export default function App(){
     }
     const recognition = new SpeechRecognition();
     voiceNavRecognitionRef.current = recognition;
-    recognition.lang = "en";
+    recognition.lang = language;
     recognition.continuous = true;
     recognition.interimResults = false;
     recognition.onstart = ()=>{

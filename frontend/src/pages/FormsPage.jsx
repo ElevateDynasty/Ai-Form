@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE } from "../config";
 import { useAuth } from "../AuthContext";
+import { useLanguage } from "../LanguageContext";
 
 function getFields(schema){
   if(schema && Array.isArray(schema.fields)) return schema.fields;
@@ -54,6 +55,7 @@ function buildFieldMatchers(fields){
 
 export default function FormsPage(){
   const { token } = useAuth();
+  const { language } = useLanguage();
   const [forms, setForms] = useState([]);
   const [selectedForm, setSelectedForm] = useState(null);
   const [values, setValues] = useState({});
@@ -199,7 +201,7 @@ export default function FormsPage(){
     }
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
-    recognition.lang = "en";
+    recognition.lang = language;
     recognition.continuous = true;
     recognition.interimResults = true;
     const activeField = activeFieldName ? activeFields.find(f => f.name === activeFieldName) : null;

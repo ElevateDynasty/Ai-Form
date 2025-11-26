@@ -58,6 +58,9 @@ export default function AdminFormsPage(){
   const [importText, setImportText] = useState("");
   const [ingestStatus, setIngestStatus] = useState("");
   const [ingestLoading, setIngestLoading] = useState(false);
+  const [promptText, setPromptText] = useState("");
+  const [promptLoading, setPromptLoading] = useState(false);
+  const [promptStatus, setPromptStatus] = useState("");
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -85,6 +88,8 @@ export default function AdminFormsPage(){
     setShowAdvanced(false);
     setImportText("");
     setIngestStatus("");
+    setPromptText("");
+    setPromptStatus("");
   };
 
   async function handleSubmit(e){
@@ -183,6 +188,8 @@ export default function AdminFormsPage(){
     setShowAdvanced(false);
     setImportText("");
     setIngestStatus("");
+    setPromptText("");
+    setPromptStatus("");
     setStatus(""); setError("");
   };
 
@@ -280,6 +287,40 @@ export default function AdminFormsPage(){
     event.target.value = "";
   };
 
+  const handlePromptGenerate = async () => {
+    if (!promptText.trim()) {
+      setError("Enter a prompt to generate form");
+      return;
+    }
+    setError("");
+    setPromptStatus("Generating form from prompt...");
+    setPromptLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/forms/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ prompt: promptText }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Unable to generate form" }));
+        throw new Error(err.detail || "Unable to generate form");
+      }
+      const data = await res.json();
+      const schema = data.schema || {};
+      const normalized = normalizeSchema(schema);
+      setFormState(prev => ({
+        ...prev,
+        fields: normalized.fields,
+        meta: normalized.meta,
+      }));
+      setPromptStatus(`Generated ${normalized.fields.length} fields from prompt`);
+    } catch (err) {
+      setError(err.message);
+      setPromptStatus("Generation failed");
+    }
+    setPromptLoading(false);
+  };
+
   if(role !== "admin"){
     return (
       <div className="card" style={{ textAlign: "center", padding: 48 }}>
@@ -327,6 +368,43 @@ export default function AdminFormsPage(){
                 placeholder="Brief description of the form's purpose"
               />
             </div>
+          </div>
+
+          {/* Prompt Generation */}
+          <div style={{ 
+            background: "linear-gradient(135deg, #fff1f2 0%, #fff7ed 100%)", 
+            borderRadius: 16, 
+            padding: 20, 
+            marginBottom: 24,
+            border: "1px solid rgba(244,63,94,0.15)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <h4 style={{ margin: 0, fontSize: 15 }}>✨ Generate from Prompt</h4>
+              {promptLoading && <span className="badge warning animate-pulse">Generating...</span>}
+            </div>
+            <p className="muted" style={{ fontSize: 13, marginBottom: 14 }}>
+              Describe the form you want to create, and AI will build it for you.
+            </p>
+            <div style={{ display: "flex", gap: 10 }}>
+              <input
+                type="text"
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder="e.g., Create a registration form with name, email, phone and address"
+                disabled={promptLoading}
+                style={{ flex: 1 }}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handlePromptGenerate())}
+              />
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                onClick={handlePromptGenerate}
+                disabled={promptLoading}
+              >
+                Generate
+              </button>
+            </div>
+            {promptStatus && <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>{promptStatus}</p>}
           </div>
 
           {/* Document Import */}

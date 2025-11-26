@@ -5,9 +5,6 @@ import { useAuth } from '../AuthContext';
 const LANG_OPTIONS = [
   { value: 'en', label: 'English' },
   { value: 'hi', label: 'Hindi' },
-  { value: 'mr', label: 'Marathi' },
-  { value: 'bn', label: 'Bengali' },
-  { value: 'ta', label: 'Tamil' },
 ];
 
 export default function AudioPage(){
