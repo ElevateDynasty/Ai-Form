@@ -1,0 +1,212 @@
+# ================================
+# Python
+# ================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+backend/.venv/
+
+# Distribution / Packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# celery
+celerybeat-schedule
+celerybeat.pid
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# ================================
+# Node / JavaScript
+# ================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Compiled output
+dist/
+dist-ssr/
+*.local
+
+# Vite
+.vite/
+
+# ================================
+# Database
+# ================================
+*.db
+*.sqlite
+*.sqlite3
+backend_data.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# ================================
+# Environment & Secrets
+# ================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+*.pem
+*.key
+secrets/
+config/local.py
+
+# ================================
+# IDEs & Editors
+# ================================
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.iml
+
+# ================================
+# OS Generated
+# ================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ================================
+# Logs & Temp Files
+# ================================
+*.log
+logs/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ================================
+# ML Models & Large Files
+# ================================
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.model
+*.pt
+*.pth
+*.onnx
+models/
+*.bin
+
+# ================================
+# Uploads & Generated Files
+# ================================
+uploads/
+temp/
+tmp/
+*.pdf.filled
+output/
+exports/
+
+# ================================
+# Testing
+# ================================
+.coverage
+htmlcov/
+.pytest_cache/
+test-results/
+coverage/
+
+# ================================
+# Documentation Build
+# ================================
+docs/_build/
+site/

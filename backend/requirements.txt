@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+PyPDF2
+pdfplumber
+reportlab
+openai
+whisper
+SQLAlchemy
+pytesseract
+Pillow
+gTTS
+transformers
+torch
