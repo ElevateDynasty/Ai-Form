@@ -94,6 +94,35 @@ async def health_check():
     return {"status": "ok"}
 
 
+@app.get("/api/seed")
+async def public_seed_templates(db: Session = Depends(get_db)):
+    """Public endpoint to seed default templates (for initial setup)."""
+    existing_count = db.query(FormTemplate).count()
+    
+    if existing_count > 0:
+        return {
+            "message": "Templates already exist",
+            "count": existing_count
+        }
+    
+    added = 0
+    for template_data in SEED_TEMPLATES:
+        template = FormTemplate(
+            title=template_data["title"],
+            description=template_data["description"],
+            schema=json.dumps(template_data["schema"]),
+            created_by="system"
+        )
+        db.add(template)
+        added += 1
+    
+    db.commit()
+    return {
+        "message": f"Seeded {added} templates successfully!",
+        "added": added
+    }
+
+
 @app.post("/api/admin/seed-templates")
 async def seed_templates(
     authorization: str | None = Header(default=None),
