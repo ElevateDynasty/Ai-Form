@@ -14,6 +14,10 @@ _model = None
 _tokenizer = None
 MODEL_NAME = "sshleifer/tiny_mBART"
 
+_trans_model = None
+_trans_tokenizer = None
+TRANS_MODEL_NAME = "Helsinki-NLP/opus-mt-en-hi"
+
 
 def _load_model():
     global _model, _tokenizer, BART_AVAILABLE
@@ -27,6 +31,44 @@ def _load_model():
             logger.error(f"Failed to load BART model: {e}")
             BART_AVAILABLE = False
     return _model, _tokenizer
+
+def _load_trans_model():
+    global _trans_model, _trans_tokenizer, BART_AVAILABLE
+    if _trans_model is None and BART_AVAILABLE:
+        try:
+            logger.info(f"Loading {TRANS_MODEL_NAME}...")
+            _trans_tokenizer = AutoTokenizer.from_pretrained(TRANS_MODEL_NAME)
+            _trans_model = AutoModelForSeq2SeqLM.from_pretrained(TRANS_MODEL_NAME)
+            logger.info("Translation model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load Translation model: {e}")
+            # Fallback to BART if translation model fails? No, just fail.
+    return _trans_model, _trans_tokenizer
+
+
+def translate_text(text: str, target_lang: str = "hi") -> str:
+    """Translate text from English to Hindi."""
+    if not text or len(text.strip()) < 2:
+        return text
+    
+    # Only En->Hi supported for now
+    if target_lang != "hi":
+        return text
+
+    model, tokenizer = _load_trans_model()
+    if not model or not tokenizer:
+        logger.warning("Translation model unavailable; returning original text")
+        return text
+    
+    try:
+        inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True)
+        output_ids = model.generate(inputs["input_ids"], max_length=128, num_beams=4, early_stopping=True)
+        translation = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+        return translation.strip()
+    except Exception as e:
+        logger.error(f"Translation error: {e}")
+        return text
+
 
 
 def summarize_text(text: str, max_length: int = 50) -> str:

@@ -289,6 +289,26 @@ export default function FormsPage(){
     setTtsLoading(false);
   };
 
+  const handleTranslate = async (fieldName) => {
+    const text = values[fieldName];
+    if (!text || !text.trim()) return;
+    
+    try {
+      const res = await fetch(`${API_BASE}/llm/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, target_lang: "hi" }),
+      });
+      if (!res.ok) throw new Error("Translation failed");
+      const data = await res.json();
+      if (data.translated) {
+        setValues(prev => ({ ...prev, [fieldName]: data.translated }));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleOcrUpload = async (event)=>{
     const file = event.target.files && event.target.files[0];
     if(!file){ return; }
@@ -549,25 +569,51 @@ export default function FormsPage(){
                       {field.label || field.name}
                       {field.required && <span style={{ color: "var(--danger)", marginLeft: 4 }}>*</span>}
                     </label>
-                    {field.type === "textarea" ? (
-                      <textarea
-                        rows={field.rows || 4}
-                        value={values[field.name] ?? ""}
-                        onChange={(e)=>handleChange(field, e.target.value)}
-                        onFocus={()=>handleFieldFocus(field.name)}
-                        placeholder={field.placeholder}
-                        required={field.required}
-                      />
-                    ) : (
-                      <input
-                        type={field.type || "text"}
-                        value={values[field.name] ?? ""}
-                        onChange={(e)=>handleChange(field, e.target.value)}
-                        onFocus={()=>handleFieldFocus(field.name)}
-                        placeholder={field.placeholder}
-                        required={field.required}
-                      />
-                    )}
+                    <div style={{ position: "relative" }}>
+                      {field.type === "textarea" ? (
+                        <textarea
+                          rows={field.rows || 4}
+                          value={values[field.name] ?? ""}
+                          onChange={(e)=>handleChange(field, e.target.value)}
+                          onFocus={()=>handleFieldFocus(field.name)}
+                          placeholder={field.placeholder}
+                          required={field.required}
+                          style={{ width: "100%" }}
+                        />
+                      ) : (
+                        <input
+                          type={field.type || "text"}
+                          value={values[field.name] ?? ""}
+                          onChange={(e)=>handleChange(field, e.target.value)}
+                          onFocus={()=>handleFieldFocus(field.name)}
+                          placeholder={field.placeholder}
+                          required={field.required}
+                          style={{ width: "100%" }}
+                        />
+                      )}
+                      {language === "hi" && (field.type === "text" || field.type === "textarea") && values[field.name] && (
+                        <button
+                          type="button"
+                          onClick={() => handleTranslate(field.name)}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: field.type === "textarea" ? 12 : "50%",
+                            transform: field.type === "textarea" ? "none" : "translateY(-50%)",
+                            background: "rgba(255,255,255,0.8)",
+                            border: "1px solid #ddd",
+                            borderRadius: 4,
+                            cursor: "pointer",
+                            fontSize: 12,
+                            padding: "2px 6px",
+                            zIndex: 5
+                          }}
+                          title="Translate to Hindi"
+                        >
+                          अ
+                        </button>
+                      )}
+                    </div>
                     {isEmailField(field) && (
                       <p className="field-hint">Auto-formatted to lowercase, no spaces</p>
                     )}

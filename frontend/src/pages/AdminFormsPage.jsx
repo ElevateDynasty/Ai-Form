@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
 import { useAuth } from "../AuthContext";
+import { useLanguage } from "../LanguageContext";
 
 const FIELD_TYPES = [
   "text",
@@ -44,6 +45,7 @@ const normalizeSchema = (schema)=>{
 
 export default function AdminFormsPage(){
   const { token, role } = useAuth();
+  const { language } = useLanguage();
   const [forms, setForms] = useState([]);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
@@ -321,6 +323,24 @@ export default function AdminFormsPage(){
     setPromptLoading(false);
   };
 
+  const handleTranslate = async (text, callback) => {
+    if (!text || !text.trim()) return;
+    try {
+      const res = await fetch(`${API_BASE}/llm/translate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, target_lang: "hi" }),
+      });
+      if (!res.ok) throw new Error("Translation failed");
+      const data = await res.json();
+      if (data.translated) {
+        callback(data.translated);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if(role !== "admin"){
     return (
       <div className="card" style={{ textAlign: "center", padding: 48 }}>
@@ -349,7 +369,7 @@ export default function AdminFormsPage(){
 
         <form onSubmit={handleSubmit}>
           <div className="form-grid" style={{ marginBottom: 24 }}>
-            <div className="field">
+            <div className="field" style={{ position: "relative" }}>
               <label>Form Title *</label>
               <input 
                 type="text" 
@@ -358,8 +378,28 @@ export default function AdminFormsPage(){
                 onChange={(e)=>setFormState({...formState, title: e.target.value})}
                 placeholder="e.g., Employee Onboarding Form"
               />
+              {language === "hi" && formState.title && (
+                <button
+                  type="button"
+                  onClick={() => handleTranslate(formState.title, (val) => setFormState(prev => ({ ...prev, title: val })))}
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: "50%",
+                    transform: "translateY(0%)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    opacity: 0.6
+                  }}
+                  title="Translate to Hindi"
+                >
+                  🌐
+                </button>
+              )}
             </div>
-            <div className="field">
+            <div className="field" style={{ position: "relative" }}>
               <label>Description</label>
               <input 
                 type="text" 
@@ -367,6 +407,26 @@ export default function AdminFormsPage(){
                 onChange={(e)=>setFormState({...formState, description: e.target.value})}
                 placeholder="Brief description of the form's purpose"
               />
+              {language === "hi" && formState.description && (
+                <button
+                  type="button"
+                  onClick={() => handleTranslate(formState.description, (val) => setFormState(prev => ({ ...prev, description: val })))}
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: "50%",
+                    transform: "translateY(0%)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    opacity: 0.6
+                  }}
+                  title="Translate to Hindi"
+                >
+                  🌐
+                </button>
+              )}
             </div>
           </div>
 
@@ -480,7 +540,7 @@ export default function AdminFormsPage(){
                         placeholder="e.g., full_name"
                       />
                     </div>
-                    <div className="field">
+                    <div className="field" style={{ position: "relative" }}>
                       <label>Label *</label>
                       <input
                         type="text"
@@ -488,6 +548,26 @@ export default function AdminFormsPage(){
                         onChange={(e)=>updateField(index, { label: e.target.value })}
                         placeholder="e.g., Full Name"
                       />
+                      {language === "hi" && field.label && (
+                        <button
+                          type="button"
+                          onClick={() => handleTranslate(field.label, (val) => updateField(index, { label: val }))}
+                          style={{
+                            position: "absolute",
+                            right: 8,
+                            top: "50%",
+                            transform: "translateY(0%)",
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 16,
+                            opacity: 0.6
+                          }}
+                          title="Translate to Hindi"
+                        >
+                          🌐
+                        </button>
+                      )}
                     </div>
                     <div className="field">
                       <label>Type</label>

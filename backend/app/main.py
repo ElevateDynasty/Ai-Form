@@ -24,7 +24,7 @@ from .services.ocr_service import extract_fields_from_document, generate_schema_
 from .services.llm_service import clean_text, generate_form_from_prompt
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
-from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases
+from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases, translate_text
 
 
 app = FastAPI(title="AI Universal Form Assistant")
@@ -72,6 +72,11 @@ class TextCleanRequest(BaseModel):
 class TextSummaryRequest(BaseModel):
     text: str
     max_length: int = 50
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    target_lang: str = "hi"
 
 
 class FormGenerationRequest(BaseModel):
@@ -521,3 +526,16 @@ async def llm_extract_phrases(text: str = None, num_phrases: int = 5):
         return {"text": text, "phrases": phrases}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Extraction failed: {str(exc)}") from exc
+
+
+@app.post("/api/llm/translate")
+async def llm_translate(req: TranslateRequest):
+    """Translate text (En -> Hi)."""
+    if not req.text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    try:
+        translated = translate_text(req.text, req.target_lang)
+        return {"original": req.text, "translated": translated, "lang": req.target_lang}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Translation failed: {str(exc)}") from exc
+
