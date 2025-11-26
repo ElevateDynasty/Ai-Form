@@ -3,6 +3,7 @@ import "./styles.css";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "./AuthContext";
+import { useLanguage, LANGUAGES } from "./LanguageContext";
 
 export default function App(){
   const {
@@ -13,12 +14,14 @@ export default function App(){
     voiceNavStatus,
     setVoiceNavStatus,
   } = useAuth();
+  const { t, language, setLanguage, languages } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
   const [accessibilityMode, setAccessibilityMode] = useState(()=>{
     if(typeof window === "undefined") return false;
     return window.localStorage?.getItem("accessibilityMode") === "on";
   });
+  const [showLangMenu, setShowLangMenu] = useState(false);
 
   useEffect(()=>{
     if(accessibilityMode){
@@ -104,18 +107,21 @@ export default function App(){
 
   const links = useMemo(()=>{
     const base = [
-      { to: "/", label: "Home", icon: "🏠" },
-      { to: "/ocr", label: "OCR", icon: "📄" },
-      { to: "/audio", label: "Voice", icon: "🎤" },
-      { to: "/forms", label: "Forms", icon: "📝" },
-      { to: "/pdf-fill", label: "PDF", icon: "📑" },
-      { to: "/llm", label: "AI", icon: "✨" },
+      { to: "/", label: t("nav_home"), icon: "🏠" },
+      { to: "/ocr", label: t("nav_ocr"), icon: "📄" },
+      { to: "/audio", label: t("nav_voice"), icon: "🎤" },
+      { to: "/forms", label: t("nav_forms"), icon: "📝" },
+      { to: "/pdf-fill", label: t("nav_pdf"), icon: "📑" },
+      { to: "/llm", label: t("nav_ai"), icon: "✨" },
     ];
     if(role === "admin"){
-      base.push({ to: "/forms/manage", label: "Manage", icon: "⚙️" });
+      base.push({ to: "/forms/manage", label: t("nav_manage"), icon: "⚙️" });
     }
     return base;
-  }, [role]);
+  }, [role, t]);
+
+  // Get current language info
+  const currentLang = languages.find(l => l.code === language) || languages[0];
 
   return (
     <div className="app-shell">
@@ -124,8 +130,8 @@ export default function App(){
         <div className="brand">
           <div className="logo">AI</div>
           <div>
-            <p className="eyebrow">AI Forms</p>
-            <h1 className="title">Smart Form Platform</h1>
+            <p className="eyebrow">{t("app_name")}</p>
+            <h1 className="title">{t("app_tagline")}</h1>
           </div>
         </div>
 
@@ -143,6 +149,89 @@ export default function App(){
         </nav>
 
         <div style={{display:"flex",alignItems:"center",gap:8}}>
+          {/* Language Selector */}
+          <div style={{ position: "relative" }}>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => setShowLangMenu(!showLangMenu)}
+              style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 70 }}
+              title={t("select_language")}
+            >
+              <span style={{ fontSize: 16 }}>{currentLang.flag}</span>
+              <span style={{ fontSize: 12 }}>{currentLang.code.toUpperCase()}</span>
+              <span style={{ fontSize: 10, opacity: 0.7 }}>▼</span>
+            </button>
+            
+            {showLangMenu && (
+              <>
+                <div 
+                  style={{ 
+                    position: "fixed", 
+                    inset: 0, 
+                    zIndex: 99 
+                  }} 
+                  onClick={() => setShowLangMenu(false)} 
+                />
+                <div style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: 0,
+                  marginTop: 8,
+                  background: "white",
+                  borderRadius: 12,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  zIndex: 100,
+                  minWidth: 160,
+                  maxHeight: 320,
+                  overflowY: "auto",
+                  padding: 8
+                }}>
+                  {languages.map(lang => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setShowLangMenu(false);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        width: "100%",
+                        padding: "10px 12px",
+                        border: "none",
+                        background: language === lang.code ? "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)" : "transparent",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        fontSize: 14,
+                        textAlign: "left",
+                        transition: "background 0.15s"
+                      }}
+                      onMouseEnter={e => {
+                        if(language !== lang.code) e.target.style.background = "rgba(0,0,0,0.04)";
+                      }}
+                      onMouseLeave={e => {
+                        if(language !== lang.code) e.target.style.background = "transparent";
+                      }}
+                    >
+                      <span style={{ fontSize: 18 }}>{lang.flag}</span>
+                      <span style={{ 
+                        fontWeight: language === lang.code ? 600 : 400,
+                        color: language === lang.code ? "var(--primary)" : "inherit"
+                      }}>{lang.label}</span>
+                      {language === lang.code && (
+                        <span style={{ marginLeft: "auto", color: "var(--primary)" }}>✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <button
             type="button"
             className="btn btn-ghost btn-sm"
@@ -184,12 +273,12 @@ export default function App(){
               {(role || "U")[0].toUpperCase()}
             </div>
             <div>
-              <p style={{margin:0,fontSize:12,color:"var(--muted)"}}>Logged in as</p>
+              <p style={{margin:0,fontSize:12,color:"var(--muted)"}}>{t("logged_in_as")}</p>
               <p style={{margin:0,fontSize:13,fontWeight:600,textTransform:"capitalize"}}>{role ?? "User"}</p>
             </div>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={logout} title="Sign out">
-            Logout
+          <button className="btn btn-ghost btn-sm" onClick={logout} title={t("logout")}>
+            {t("logout")}
           </button>
         </div>
       </header>

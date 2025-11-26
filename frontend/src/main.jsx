@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import App from "./App";
 import { AuthProvider, useAuth } from "./AuthContext";
+import { LanguageProvider, useLanguage } from "./LanguageContext";
 import Login from "./pages/Login";
 import OCRPage from "./pages/OCRPage";
 import AudioPage from "./pages/AudioPage";
@@ -14,52 +15,53 @@ import RequireAuth from "./RequireAuth";
 
 function Dashboard(){
   const { role } = useAuth();
+  const { t } = useLanguage();
 
   const quickActions = [
-    { label: "Scan Documents", to: "/ocr", helper: "PDF & image OCR", icon: "📄" },
-    { label: "Voice Input", to: "/audio", helper: "Speech to text", icon: "🎤" },
-    { label: "Fill Forms", to: "/forms", helper: "Smart autofill", icon: "📝" },
-    { label: "PDF Templates", to: "/pdf-fill", helper: "Merge & export", icon: "📑" },
-    { label: "Text AI", to: "/llm", helper: "Clean & summarize", icon: "✨" },
+    { label: t("scan_docs"), to: "/ocr", helper: t("scan_docs_desc"), icon: "📄" },
+    { label: t("voice_input"), to: "/audio", helper: t("voice_input_desc"), icon: "🎤" },
+    { label: t("fill_forms"), to: "/forms", helper: t("fill_forms_desc"), icon: "📝" },
+    { label: t("pdf_templates"), to: "/pdf-fill", helper: t("pdf_templates_desc"), icon: "📑" },
+    { label: t("text_ai"), to: "/llm", helper: t("text_ai_desc"), icon: "✨" },
   ];
   if(role === "admin"){
-    quickActions.push({ label: "Manage Forms", to: "/forms/manage", helper: "Visual builder", icon: "⚙️" });
+    quickActions.push({ label: t("manage_forms"), to: "/forms/manage", helper: t("manage_forms_desc"), icon: "⚙️" });
   }
 
   const workflow = [
-    { title: "Ingest", detail: "Upload documents or start from templates. Our OCR extracts key data automatically.", icon: "📥" },
-    { title: "Enrich", detail: "Add voice input, merge OCR results, and validate entries with smart hints.", icon: "🔧" },
-    { title: "Validate", detail: "Review normalized data, check required fields, and fix any issues.", icon: "✅" },
-    { title: "Export", detail: "Download as JSON, generate PDFs, or share directly from the platform.", icon: "📤" },
+    { title: t("step_ingest"), detail: t("step_ingest_desc"), icon: "📥" },
+    { title: t("step_enrich"), detail: t("step_enrich_desc"), icon: "🔧" },
+    { title: t("step_validate"), detail: t("step_validate_desc"), icon: "✅" },
+    { title: t("step_export"), detail: t("step_export_desc"), icon: "📤" },
   ];
 
   const highlights = [
     {
-      title: "Document → Form",
-      description: "Upload any PDF or image and let AI draft the form structure automatically.",
+      title: t("doc_to_form"),
+      description: t("doc_to_form_desc"),
       link: "/forms/manage",
-      cta: "Try it now",
+      cta: t("try_now"),
       gradient: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
     },
     {
-      title: "Voice Filling",
-      description: "Speak naturally to fill forms. Say 'Set email to john@example.com' and watch the magic.",
+      title: t("voice_filling"),
+      description: t("voice_filling_desc"),
       link: "/forms",
-      cta: "Start filling",
+      cta: t("start_filling"),
       gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
     },
     {
-      title: "Smart Export",
-      description: "Every submission can be downloaded as JSON or a professionally formatted PDF.",
+      title: t("smart_export"),
+      description: t("smart_export_desc"),
       link: "/forms",
-      cta: "View forms",
+      cta: t("view_forms"),
       gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
     },
     {
-      title: "Text AI",
-      description: "Clean up messy OCR text, summarize long documents, or extract key phrases.",
+      title: t("text_ai"),
+      description: t("text_ai_desc"),
       link: "/llm",
-      cta: "Open AI tools",
+      cta: t("open_ai_tools"),
       gradient: "linear-gradient(135deg, #ec4899 0%, #be185d 100%)",
     },
   ];
@@ -73,13 +75,12 @@ function Dashboard(){
         marginBottom: 28,
         padding: "36px 32px"
       }}>
-        <p className="eyebrow" style={{ color: "rgba(255,255,255,0.8)" }}>Welcome to AI Forms</p>
+        <p className="eyebrow" style={{ color: "rgba(255,255,255,0.8)" }}>{t("app_name")}</p>
         <h2 style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 12px", letterSpacing: "-0.5px" }}>
-          Your intelligent form management hub
+          {t("welcome_title")}
         </h2>
         <p style={{ opacity: 0.9, maxWidth: 600, marginBottom: 24, lineHeight: 1.6 }}>
-          Convert documents to forms with OCR, fill them using voice commands, and export 
-          professional PDFs — all from one unified platform.
+          {t("welcome_subtitle")}
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
           {quickActions.map(action => (
@@ -110,7 +111,7 @@ function Dashboard(){
 
       {/* Workflow Steps */}
       <div style={{ marginBottom: 28 }}>
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text-secondary)" }}>How it works</h3>
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: "var(--text-secondary)" }}>{t("how_it_works")}</h3>
         <div className="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
           {workflow.map((step, idx)=>(
             <div key={step.title} className="card" style={{ padding: 20, textAlign: "center" }}>
@@ -127,7 +128,7 @@ function Dashboard(){
               }}>
                 {step.icon}
               </div>
-              <span className="badge" style={{ marginBottom: 8 }}>Step {idx + 1}</span>
+              <span className="badge" style={{ marginBottom: 8 }}>{idx + 1}</span>
               <h4 style={{ margin: "8px 0 6px", fontSize: 15 }}>{step.title}</h4>
               <p className="muted" style={{ fontSize: 13, margin: 0 }}>{step.detail}</p>
             </div>
@@ -161,22 +162,24 @@ function Dashboard(){
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<RequireAuth><App /></RequireAuth>}>
-            <Route index element={<Dashboard />} />
-            <Route path="ocr" element={<OCRPage />} />
-            <Route path="audio" element={<AudioPage />} />
-            <Route path="forms" element={<FormsPage />} />
-            <Route path="forms/manage" element={<AdminFormsPage />} />
-            <Route path="pdf-fill" element={<PdfFillPage />} />
-            <Route path="llm" element={<LLMPage />} />
-          </Route>
-          <Route path="/auth" element={<Login />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<RequireAuth><App /></RequireAuth>}>
+              <Route index element={<Dashboard />} />
+              <Route path="ocr" element={<OCRPage />} />
+              <Route path="audio" element={<AudioPage />} />
+              <Route path="forms" element={<FormsPage />} />
+              <Route path="forms/manage" element={<AdminFormsPage />} />
+              <Route path="pdf-fill" element={<PdfFillPage />} />
+              <Route path="llm" element={<LLMPage />} />
+            </Route>
+            <Route path="/auth" element={<Login />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </LanguageProvider>
   </React.StrictMode>
 );
