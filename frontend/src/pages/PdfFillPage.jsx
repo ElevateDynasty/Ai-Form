@@ -95,10 +95,10 @@ export default function PdfFillPage(){
           <div style={{display:"flex", alignItems:"center", gap:12}}>
             <div style={{
               width:48, height:48, borderRadius:14, 
-              background:"linear-gradient(135deg, #ec4899, #db2777)",
+              background:"linear-gradient(135deg, #ff00ff, #bf00ff)",
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:24,
-              boxShadow:"0 8px 24px rgba(236,72,153,0.25)"
+              boxShadow:"0 8px 24px rgba(255,0,255,0.3)"
             }}>
               📑
             </div>
@@ -111,9 +111,9 @@ export default function PdfFillPage(){
         </div>
         
         <div style={{
-          background:"linear-gradient(135deg, rgba(236,72,153,0.06), rgba(139,92,246,0.04))",
+          background:"linear-gradient(135deg, rgba(255, 0, 255, 0.06), rgba(0, 245, 255, 0.04))",
           borderRadius:14, padding:16, marginBottom:24,
-          border:"1px solid rgba(236,72,153,0.1)"
+          border:"1px solid rgba(255, 0, 255, 0.15)"
         }}>
           <p className="muted" style={{ margin:0, lineHeight: 1.7, fontSize:13 }}>
             📄 Upload any PDF with form fields (AcroForm). Pair it with JSON values from the Forms workspace or paste data below, then download a ready-to-share copy instantly.
@@ -165,7 +165,7 @@ export default function PdfFillPage(){
               <label style={{fontWeight:600, fontSize:15}}>Provide Field Values</label>
             </div>
             
-            <div style={{display:'flex', gap:8, marginBottom:16, background:'rgba(15,23,42,0.03)', padding:6, borderRadius:14}}>
+            <div style={{display:'flex', gap:8, marginBottom:16, background:'rgba(0, 245, 255, 0.03)', padding:6, borderRadius:14, border:'1px solid rgba(0, 245, 255, 0.1)'}}>
               <button 
                 type="button" 
                 className={`btn ${!jsonFile ? 'btn-primary' : 'btn-ghost'}`}
@@ -253,25 +253,25 @@ export default function PdfFillPage(){
         </div>
         
         <div className="card" style={{
-          background:'linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%)',
-          border:"1px solid rgba(99,102,241,0.1)"
+          background:'linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(191, 0, 255, 0.05) 100%)',
+          border:"1px solid rgba(0, 245, 255, 0.2)"
         }}>
           <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
             <span style={{fontSize:20}}>💡</span>
-            <h4 style={{ margin:0, fontSize:15, color:'var(--primary)' }}>Pro Tip</h4>
+            <h4 style={{ margin:0, fontSize:15, color:'#00f5ff' }}>Pro Tip</h4>
           </div>
           <p className="muted" style={{fontSize:13, margin:0, lineHeight:1.6}}>
-            Scanned PDFs are just images. You must convert them to <strong style={{color:"#0f172a"}}>fillable forms</strong> first using our OCR tab or external tools like Adobe Acrobat.
+            Scanned PDFs are just images. You must convert them to <strong style={{color:"var(--text-primary)"}}>fillable forms</strong> first using our OCR tab or external tools like Adobe Acrobat.
           </p>
         </div>
 
         <div className="card" style={{
-          background:'linear-gradient(135deg, #fef3c7 0%, #fff 100%)',
-          border:"1px solid rgba(245,158,11,0.15)"
+          background:'linear-gradient(135deg, rgba(0, 255, 136, 0.05) 0%, rgba(0, 245, 255, 0.05) 100%)',
+          border:"1px solid rgba(0, 255, 136, 0.2)"
         }}>
           <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
             <span style={{fontSize:20}}>⚡</span>
-            <h4 style={{ margin:0, fontSize:15, color:'#d97706' }}>Quick Start</h4>
+            <h4 style={{ margin:0, fontSize:15, color:'#00ff88' }}>Quick Start</h4>
           </div>
           <p className="muted" style={{fontSize:13, margin:0, lineHeight:1.6}}>
             Try with the sample JSON provided! Just upload any fillable PDF and hit generate.

@@ -417,11 +417,11 @@ export default function AdminFormsPage(){
 
           {/* Document Import */}
           <div style={{ 
-            background: "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)", 
+            background: "linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(191, 0, 255, 0.05) 100%)", 
             borderRadius: 16, 
             padding: 20, 
             marginBottom: 24,
-            border: "1px solid rgba(99,102,241,0.15)"
+            border: "1px solid rgba(0, 245, 255, 0.2)"
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
               <h4 style={{ margin: 0, fontSize: 15 }}>📄 Import from Document</h4>
@@ -602,9 +602,9 @@ export default function AdminFormsPage(){
               <div style={{ 
                 marginTop: 16, 
                 padding: 20, 
-                background: "rgba(15,23,42,0.02)", 
+                background: "rgba(0, 245, 255, 0.03)", 
                 borderRadius: 16,
-                border: "1px solid var(--border)"
+                border: "1px solid rgba(0, 245, 255, 0.15)"
               }}>
                 <div style={{ marginBottom: 20 }}>
                   <label style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, display: "block" }}>
@@ -674,7 +674,7 @@ export default function AdminFormsPage(){
                 justifyContent: "space-between", 
                 alignItems: "center",
                 padding: 16,
-                background: editingId === template.id ? "rgba(99,102,241,0.06)" : "rgba(15,23,42,0.02)",
+                background: editingId === template.id ? "rgba(0, 245, 255, 0.1)" : "rgba(0, 245, 255, 0.03)",
                 borderRadius: 14,
                 border: editingId === template.id ? "2px solid var(--primary)" : "1px solid var(--border)"
               }}

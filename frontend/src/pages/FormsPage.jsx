@@ -525,7 +525,7 @@ export default function FormsPage(){
                   padding: "16px 20px",
                   background: selectedForm?.id === template.id 
                     ? "linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(139,92,246,0.1) 100%)" 
-                    : "rgba(15,23,42,0.02)",
+                    : "rgba(0, 245, 255, 0.03)",
                   border: selectedForm?.id === template.id 
                     ? "2px solid var(--primary)" 
                     : "1px solid var(--border)",
@@ -582,11 +582,11 @@ export default function FormsPage(){
           <>
             {/* Assistive Tools Section */}
             <div style={{ 
-              background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)", 
+              background: "linear-gradient(135deg, rgba(0, 245, 255, 0.05) 0%, rgba(191, 0, 255, 0.05) 100%)", 
               borderRadius: 16, 
               padding: 20, 
               marginBottom: 24,
-              border: "1px solid var(--border)"
+              border: "1px solid rgba(0, 245, 255, 0.2)"
             }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                 <h4 style={{ margin: 0, fontSize: 15 }}>🎤 Assistive Tools</h4>

@@ -139,7 +139,7 @@ export default function AudioPage(){
           </span>
         </div>
         
-        <p className="muted" style={{ marginBottom: 24, background:"rgba(15,23,42,0.02)", padding:12, borderRadius:10, fontSize:13 }}>
+        <p className="muted" style={{ marginBottom: 24, background:"rgba(0, 245, 255, 0.05)", padding:12, borderRadius:10, fontSize:13, border:"1px solid rgba(0, 245, 255, 0.1)" }}>
           💡 Browser-based speech recognition. Works best in Chrome/Edge. Speaks are transcribed in real-time.
         </p>
         
@@ -162,7 +162,7 @@ export default function AudioPage(){
             </label>
             <div className="output" style={{
               minHeight:180, maxHeight:300, overflowY:'auto',
-              background: browserListening ? "rgba(16,185,129,0.04)" : "rgba(15,23,42,0.02)",
+              background: browserListening ? "rgba(0, 255, 136, 0.08)" : "rgba(0, 245, 255, 0.03)",
               border: browserListening ? "2px solid rgba(16,185,129,0.2)" : "1px solid var(--border)",
               transition: "all 0.3s ease"
             }}>
@@ -214,10 +214,10 @@ export default function AudioPage(){
           <div style={{display:"flex", alignItems:"center", gap:12}}>
             <div style={{
               width:48, height:48, borderRadius:14, 
-              background:"linear-gradient(135deg, #f59e0b, #d97706)",
+              background:"linear-gradient(135deg, #ff00ff, #bf00ff)",
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:24,
-              boxShadow:"0 8px 24px rgba(245,158,11,0.25)"
+              boxShadow:"0 8px 24px rgba(255,0,255,0.3)"
             }}>
               🔊
             </div>
@@ -229,7 +229,7 @@ export default function AudioPage(){
           {audioUrl && <span className="badge success">Audio Ready</span>}
         </div>
         
-        <p className="muted" style={{ marginBottom: 24, background:"rgba(15,23,42,0.02)", padding:12, borderRadius:10, fontSize:13 }}>
+        <p className="muted" style={{ marginBottom: 24, background:"rgba(191, 0, 255, 0.05)", padding:12, borderRadius:10, fontSize:13, border:"1px solid rgba(191, 0, 255, 0.1)" }}>
           🎵 Convert text into natural sounding speech using server-side TTS engine.
         </p>
         
