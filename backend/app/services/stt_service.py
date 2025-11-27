@@ -6,6 +6,14 @@ import os
 import io
 from typing import Optional
 
+try:
+    import assemblyai as aai
+    ASSEMBLYAI_AVAILABLE = True
+except ImportError:
+    ASSEMBLYAI_AVAILABLE = False
+    aai = None
+
+
 def transcribe_audio(audio_bytes: bytes, language_code: Optional[str] = None) -> dict:
     """
     Transcribe audio using AssemblyAI API.
@@ -22,9 +30,10 @@ def transcribe_audio(audio_bytes: bytes, language_code: Optional[str] = None) ->
     if not api_key:
         raise ValueError("ASSEMBLYAI_API_KEY not configured")
     
+    if not ASSEMBLYAI_AVAILABLE:
+        raise ValueError("assemblyai package not installed")
+    
     try:
-        import assemblyai as aai
-        
         # Configure AssemblyAI
         aai.settings.api_key = api_key
         
@@ -53,8 +62,6 @@ def transcribe_audio(audio_bytes: bytes, language_code: Optional[str] = None) ->
             "status": "completed"
         }
         
-    except ImportError:
-        raise ValueError("assemblyai package not installed")
     except Exception as e:
         raise ValueError(f"Transcription error: {str(e)}")
 
