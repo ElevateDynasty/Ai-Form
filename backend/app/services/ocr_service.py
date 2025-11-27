@@ -1,6 +1,7 @@
 import io
 import os
 import re
+import sys
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -12,9 +13,38 @@ IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
 
 
 def _ensure_tesseract_path():
+    """Configure Tesseract path for local installation."""
+    # Check if already configured via environment variable
     custom_path = os.getenv("TESSERACT_CMD")
-    if custom_path:
+    if custom_path and os.path.exists(custom_path):
         pytesseract.pytesseract.tesseract_cmd = custom_path
+        return
+    
+    # Windows default installation paths
+    if sys.platform == "win32":
+        common_paths = [
+            r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+            r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+            r"C:\Tesseract-OCR\tesseract.exe",
+            os.path.expanduser(r"~\AppData\Local\Tesseract-OCR\tesseract.exe"),
+        ]
+        for path in common_paths:
+            if os.path.exists(path):
+                pytesseract.pytesseract.tesseract_cmd = path
+                return
+    
+    # Linux/Mac - tesseract should be in PATH
+    # No action needed, pytesseract will find it
+
+
+def _check_tesseract_available() -> bool:
+    """Check if Tesseract is properly installed and accessible."""
+    _ensure_tesseract_path()
+    try:
+        version = pytesseract.get_tesseract_version()
+        return version is not None
+    except Exception:
+        return False
 
 
 def _extract_text_from_pdf(file_bytes: bytes) -> str:
@@ -24,9 +54,48 @@ def _extract_text_from_pdf(file_bytes: bytes) -> str:
     return combined.strip()
 
 
-def _extract_text_from_image(file_bytes: bytes) -> str:
+def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
+    """Extract text from image using Tesseract OCR.
+    
+    Args:
+        file_bytes: Image file content
+        lang: Tesseract language code (eng, hin, eng+hin)
+    """
     image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
-    return pytesseract.image_to_string(image)
+    
+    # OCR configuration for better accuracy
+    custom_config = r'--oem 3 --psm 6'
+    
+    try:
+        text = pytesseract.image_to_string(image, lang=lang, config=custom_config)
+    except pytesseract.TesseractError as e:
+        # Fallback to English only if language pack not available
+        if "language" in str(e).lower():
+            text = pytesseract.image_to_string(image, lang="eng", config=custom_config)
+        else:
+            raise
+    
+    return text
+
+
+def get_tesseract_info() -> Dict[str, Any]:
+    """Get Tesseract installation info for debugging."""
+    _ensure_tesseract_path()
+    info = {
+        "available": False,
+        "version": None,
+        "path": pytesseract.pytesseract.tesseract_cmd,
+        "languages": [],
+    }
+    try:
+        info["version"] = str(pytesseract.get_tesseract_version())
+        info["available"] = True
+        # Get available languages
+        langs = pytesseract.get_languages()
+        info["languages"] = langs if langs else ["eng"]
+    except Exception as e:
+        info["error"] = str(e)
+    return info
 
 
 EMAIL_RE = re.compile(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+")

@@ -20,7 +20,7 @@ _SESSIONS: Dict[str, Dict[str, str]] = {}
 # backend/app/services/ocr_service.py, stt_service.py, llm_service.py, pdf_service.py
 from .db import get_db, init_db, seed_default_templates, SEED_TEMPLATES
 from .models import Base, FormTemplate, FormResponse
-from .services.ocr_service import extract_fields_from_document, generate_schema_from_document
+from .services.ocr_service import extract_fields_from_document, generate_schema_from_document, get_tesseract_info
 from .services.llm_service import clean_text, generate_form_from_prompt
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
@@ -101,6 +101,13 @@ async def root():
 @app.get("/api/health")
 async def health_check():
     return {"status": "ok"}
+
+
+@app.get("/api/tesseract/status")
+async def tesseract_status():
+    """Check Tesseract OCR installation status and available languages."""
+    info = get_tesseract_info()
+    return info
 
 
 @app.get("/api/seed")
