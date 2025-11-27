@@ -15,4 +15,3 @@ requests
 sentencepiece
 httpx
 python-dotenv
-openai
