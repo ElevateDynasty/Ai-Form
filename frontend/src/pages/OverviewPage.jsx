@@ -126,6 +126,26 @@ export default function OverviewPage() {
             : "An elegant, AI-powered form processing platform with OCR, voice input, smart form generation, and bilingual support for English and Hindi."}
         </p>
 
+        <div style={{ 
+          marginTop: 24, 
+          padding: "20px 24px", 
+          background: "rgba(250, 249, 247, 0.05)", 
+          borderRadius: 12, 
+          borderLeft: "3px solid #c4a97d",
+          maxWidth: 700
+        }}>
+          <p style={{ 
+            fontSize: 14, 
+            lineHeight: 1.8, 
+            color: "#d4cfc7", 
+            margin: 0 
+          }}>
+            {language === "hi" 
+              ? "AI Form Assistant आपके फॉर्म प्रबंधन को सरल बनाता है। सरकारी दस्तावेज़ों, एप्लिकेशन फॉर्म, या किसी भी पेपरवर्क के लिए — बस अपना दस्तावेज़ अपलोड करें और हमारा AI स्वचालित रूप से फ़ील्ड निकालता है। वॉइस से टाइप करें, AI-जनित फॉर्म टेम्पलेट बनाएं, और हिंदी-अंग्रेजी में सहज अनुवाद पाएं। यह प्लेटफ़ॉर्म उन लोगों के लिए है जो कागजी कार्रवाई में समय बचाना चाहते हैं।"
+              : "AI Form Assistant simplifies your form management workflow. Whether it's government documents, application forms, or any paperwork — just upload your document and our AI automatically extracts fields using OCR. Type with your voice using speech recognition, create AI-generated form templates from simple text prompts, and seamlessly translate between Hindi and English. Built for individuals and organizations who want to save time on paperwork and improve accessibility."}
+          </p>
+        </div>
+
         <div style={{ display: "flex", gap: 12, marginTop: 28 }}>
           <Link to="/forms" className="btn" style={{
             background: "rgba(184, 149, 110, 0.2)",
