@@ -10,6 +10,28 @@ export default function OCRPage(){
   const [rawText, setRawText] = useState('');
   const [meta, setMeta] = useState({ filename: '' });
   const [error, setError] = useState('');
+  const [copyFeedback, setCopyFeedback] = useState('');
+  const [copyJsonFeedback, setCopyJsonFeedback] = useState('');
+
+  const handleCopyText = async () => {
+    try {
+      await navigator.clipboard.writeText(rawText);
+      setCopyFeedback('✓ Copied!');
+      setTimeout(() => setCopyFeedback(''), 2000);
+    } catch (err) {
+      setCopyFeedback('Failed');
+    }
+  };
+
+  const handleCopyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+      setCopyJsonFeedback('✓ Copied!');
+      setTimeout(() => setCopyJsonFeedback(''), 2000);
+    } catch (err) {
+      setCopyJsonFeedback('Failed');
+    }
+  };
 
   const handle = async ()=>{
     if(!file){ setError('Please select a file first'); return; }
@@ -74,7 +96,18 @@ export default function OCRPage(){
         <div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <h4 style={{ margin: 0, fontSize: 15, fontWeight: 600 }}>Extracted Fields</h4>
-            {fieldCount > 0 && <span className="badge success">{fieldCount} fields found</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {fieldCount > 0 && (
+                <button 
+                  className="btn btn-ghost btn-sm" 
+                  onClick={handleCopyJson}
+                  title="Copy JSON to clipboard"
+                >
+                  📋 {copyJsonFeedback || 'Copy JSON'}
+                </button>
+              )}
+              {fieldCount > 0 && <span className="badge success">{fieldCount} fields found</span>}
+            </div>
           </div>
           <pre className="pre" style={{ minHeight: 180, maxHeight: 320 }}>
             {fieldCount > 0 ? JSON.stringify(result, null, 2) : 'No data extracted yet. Upload a document to begin.'}
@@ -93,12 +126,13 @@ export default function OCRPage(){
         </div>
 
         {rawText && (
-          <div className="actions" style={{ justifyContent: 'flex-end' }}>
+          <div className="actions" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
             <button 
               className="btn btn-ghost btn-sm" 
-              onClick={() => navigator.clipboard.writeText(rawText)}
+              onClick={handleCopyText}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
             >
-              📋 Copy Text
+              📋 {copyFeedback || 'Copy Text'}
             </button>
           </div>
         )}

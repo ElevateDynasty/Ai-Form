@@ -538,3 +538,77 @@ async def llm_translate(req: TranslateRequest):
         return {"original": req.text, "translated": translated, "lang": req.target_lang}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Translation failed: {str(exc)}") from exc
+
+
+# ==================== EXPORT ALL RESPONSES (CSV) ====================
+
+@app.get("/api/forms/{form_id}/responses/export")
+async def export_all_responses(
+    form_id: int,
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """Export all responses for a form as CSV."""
+    _require_admin(authorization)
+    
+    template = db.query(FormTemplate).filter(FormTemplate.id == form_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Form not found")
+    
+    responses = db.query(FormResponse).filter(FormResponse.form_id == form_id).all()
+    
+    if not responses:
+        raise HTTPException(status_code=404, detail="No responses found for this form")
+    
+    # Get all unique field names from schema
+    schema = template.to_dict().get("schema", {})
+    fields = schema.get("fields", [])
+    field_names = [f.get("name", "") for f in fields if f.get("name")]
+    
+    # Build CSV
+    import csv
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Header row
+    header = ["Response ID", "Username", "Submitted At"] + field_names
+    writer.writerow(header)
+    
+    # Data rows
+    for resp in responses:
+        resp_dict = resp.to_dict()
+        data = resp_dict.get("data", {})
+        row = [
+            resp_dict.get("id", ""),
+            resp_dict.get("username", ""),
+            resp_dict.get("created_at", ""),
+        ]
+        for fname in field_names:
+            row.append(data.get(fname, ""))
+        writer.writerow(row)
+    
+    csv_bytes = output.getvalue().encode("utf-8")
+    filename = f"form-{form_id}-responses.csv"
+    
+    return StreamingResponse(
+        io.BytesIO(csv_bytes),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.get("/api/forms/{form_id}/responses")
+async def list_form_responses(
+    form_id: int,
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
+    """List all responses for a form (admin only)."""
+    _require_admin(authorization)
+    
+    template = db.query(FormTemplate).filter(FormTemplate.id == form_id).first()
+    if not template:
+        raise HTTPException(status_code=404, detail="Form not found")
+    
+    responses = db.query(FormResponse).filter(FormResponse.form_id == form_id).all()
+    return {"form_id": form_id, "count": len(responses), "responses": [r.to_dict() for r in responses]}

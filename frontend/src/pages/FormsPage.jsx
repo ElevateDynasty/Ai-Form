@@ -75,6 +75,9 @@ export default function FormsPage(){
   const [audioUrl, setAudioUrl] = useState("");
   const [ocrStatus, setOcrStatus] = useState("Upload a PDF or image to autofill fields");
   const [ocrLoading, setOcrLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState("");
 
   useEffect(()=>{ fetchForms(); }, []);
 
@@ -120,6 +123,34 @@ export default function FormsPage(){
 
   const activeFields = useMemo(()=> getFields(selectedForm?.schema), [selectedForm]);
   const fieldMatchers = useMemo(()=> buildFieldMatchers(activeFields), [activeFields]);
+
+  // Filter forms based on search query
+  const filteredForms = useMemo(() => {
+    if (!searchQuery.trim()) return forms;
+    const query = searchQuery.toLowerCase();
+    return forms.filter(form => 
+      form.title?.toLowerCase().includes(query) ||
+      form.description?.toLowerCase().includes(query)
+    );
+  }, [forms, searchQuery]);
+
+  // Generate shareable link for the current form
+  const getShareableLink = () => {
+    if (!selectedForm) return "";
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/forms?id=${selectedForm.id}`;
+  };
+
+  const copyShareLink = async () => {
+    const link = getShareableLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopyFeedback("Link copied!");
+      setTimeout(() => setCopyFeedback(""), 2000);
+    } catch (err) {
+      setCopyFeedback("Failed to copy");
+    }
+  };
 
   const selectForm = (template)=>{
     setSelectedForm(template);
@@ -430,6 +461,48 @@ export default function FormsPage(){
           </div>
           <span className="badge">{forms.length} available</span>
         </div>
+
+        {/* Search Forms */}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ position: "relative" }}>
+            <input
+              type="text"
+              placeholder="🔍 Search forms by title or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{ 
+                width: "100%", 
+                paddingLeft: 16,
+                background: "var(--bg-subtle)",
+                border: "1px solid var(--border)"
+              }}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                style={{
+                  position: "absolute",
+                  right: 12,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 16,
+                  color: "var(--muted)"
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {searchQuery && (
+            <p className="muted" style={{ fontSize: 12, marginTop: 8, marginBottom: 0 }}>
+              Found {filteredForms.length} of {forms.length} forms
+            </p>
+          )}
+        </div>
         
         {forms.length === 0 ? (
           <div className="empty-state">
@@ -439,7 +512,11 @@ export default function FormsPage(){
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {forms.map(template => (
+            {filteredForms.length === 0 ? (
+              <div className="empty-state" style={{ padding: 24 }}>
+                <p className="muted">No forms match "{searchQuery}"</p>
+              </div>
+            ) : filteredForms.map(template => (
               <button
                 key={template.id}
                 className="btn"
@@ -474,7 +551,20 @@ export default function FormsPage(){
       <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h3 className="section-title" style={{ fontSize: 18, marginBottom: 0 }}>Form Filling</h3>
-          {selectedForm && <span className="badge success">Active</span>}
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {selectedForm && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={copyShareLink}
+                title="Copy shareable link"
+                style={{ display: "flex", alignItems: "center", gap: 6 }}
+              >
+                🔗 {copyFeedback || "Share"}
+              </button>
+            )}
+            {selectedForm && <span className="badge success">Active</span>}
+          </div>
         </div>
         
         {!selectedForm && (

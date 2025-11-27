@@ -342,6 +342,29 @@ export default function AdminFormsPage(){
     }
   };
 
+  const handleExportResponses = async (formId, formTitle) => {
+    setError("");
+    try {
+      const res = await fetch(`${API_BASE}/forms/${formId}/responses/export`, {
+        headers: authHeader,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "No responses to export" }));
+        throw new Error(err.detail || "Unable to export responses");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${formTitle || "form"}-responses.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus(`Exported responses for "${formTitle}"`);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   if(role !== "admin"){
     return (
       <div className="card" style={{ textAlign: "center", padding: 48 }}>
@@ -744,6 +767,13 @@ export default function AdminFormsPage(){
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8 }}>
+                <button 
+                  className="btn btn-ghost btn-sm" 
+                  onClick={() => handleExportResponses(template.id, template.title)}
+                  title="Export all responses as CSV"
+                >
+                  📊 Export
+                </button>
                 <button className="btn btn-ghost btn-sm" onClick={()=>handleEdit(template)}>
                   ✏️ Edit
                 </button>
