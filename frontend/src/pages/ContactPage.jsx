@@ -98,7 +98,8 @@ export default function ContactPage() {
         <h1 style={{ 
           fontSize: 32, 
           fontFamily: "'Playfair Display', Georgia, serif",
-          marginBottom: 12
+          marginBottom: 12,
+          color: "#faf9f7"
         }}>
           {language === "hi" ? "हमसे संपर्क करें" : "Contact Us"}
         </h1>
