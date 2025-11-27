@@ -14,3 +14,4 @@ torch
 requests
 sentencepiece
 httpx
+python-dotenv
