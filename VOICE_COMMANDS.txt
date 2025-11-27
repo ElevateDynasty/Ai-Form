@@ -1,0 +1,123 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    AI FORM ASSISTANT - VOICE COMMANDS                        ║
+║                         Say any of these commands                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+To activate voice commands, click the 🎤 microphone button in the header.
+
+================================================================================
+                              NAVIGATION COMMANDS
+================================================================================
+
+  "Open home"              → Navigate to Home/Dashboard page
+  "Go to home"             → Navigate to Home/Dashboard page
+  "Open dashboard"         → Navigate to Home/Dashboard page
+  
+  "Open overview"          → Navigate to Overview/About page
+  "Go to overview"         → Navigate to Overview/About page
+  "Open about"             → Navigate to Overview/About page
+  
+  "Open OCR"               → Navigate to OCR Scanner page
+  "Go to scanner"          → Navigate to OCR Scanner page
+  "Open document"          → Navigate to OCR Scanner page
+  
+  "Open voice"             → Navigate to Voice/Audio Tools page
+  "Go to audio"            → Navigate to Voice/Audio Tools page
+  "Open speech"            → Navigate to Voice/Audio Tools page
+  
+  "Open forms"             → Navigate to Forms page
+  "Go to forms"            → Navigate to Forms page
+  
+  "Open PDF"               → Navigate to PDF Fill page
+  "Go to PDF fill"         → Navigate to PDF Fill page
+  
+  "Open AI tools"          → Navigate to AI/LLM Text Processing page
+  "Go to text processing"  → Navigate to AI/LLM Text Processing page
+  "Open LLM"               → Navigate to AI/LLM Text Processing page
+  
+  "Open contact"           → Navigate to Contact page
+  "Go to help"             → Navigate to Contact page
+  "Open support"           → Navigate to Contact page
+  
+  "Open manage"            → Navigate to Admin Form Manager (Admin only)
+  "Go to templates"        → Navigate to Admin Form Manager (Admin only)
+  "Open admin"             → Navigate to Admin Form Manager (Admin only)
+
+================================================================================
+                              ACTION COMMANDS
+================================================================================
+
+  "Toggle language"        → Switch between English and Hindi
+  "Switch language"        → Switch between English and Hindi
+  
+  "Toggle theme"           → Toggle accessibility/high-contrast mode
+  "Switch mode"            → Toggle accessibility/high-contrast mode
+  "Toggle accessibility"   → Toggle accessibility/high-contrast mode
+  
+  "Go back"                → Navigate to previous page
+  "Back"                   → Navigate to previous page
+  "Previous"               → Navigate to previous page
+  
+  "Scroll up"              → Scroll the page up
+  "Page up"                → Scroll the page up
+  
+  "Scroll down"            → Scroll the page down
+  "Page down"              → Scroll the page down
+  
+  "Scroll to top"          → Scroll to the top of the page
+  "Go to top"              → Scroll to the top of the page
+  
+  "Log out"                → Log out of the application
+  "Sign out"               → Log out of the application
+  
+  "Stop listening"         → Stop voice navigation
+  "Pause voice"            → Stop voice navigation
+  "End navigation"         → Stop voice navigation
+
+================================================================================
+                              HELP COMMANDS
+================================================================================
+
+  "Help"                   → Hear a list of available commands
+  "Commands"               → Hear a list of available commands
+  "What can you do"        → Hear a list of available commands
+
+================================================================================
+                                 TIPS
+================================================================================
+
+  • Commands are NOT case-sensitive
+  • You can say "open", "go to", or "navigate to" interchangeably
+  • Voice feedback will confirm your command
+  • If command is not recognized, try rephrasing
+  • Works best in Chrome or Edge browsers
+  • Make sure microphone permission is granted
+
+================================================================================
+                            EXAMPLES
+================================================================================
+
+  User: "Open overview"
+  System: 🔊 "Opening Overview" → Navigates to Overview page
+
+  User: "Go to forms"
+  System: 🔊 "Opening Forms" → Navigates to Forms page
+
+  User: "Toggle language"
+  System: 🔊 "Switched to Hindi" → Changes app language
+
+  User: "Help"
+  System: 🔊 Lists all available commands
+
+================================================================================
+                         SUPPORTED LANGUAGES
+================================================================================
+
+  • English (en-US) - Default
+  • Hindi (hi-IN) - When language is set to Hindi
+
+  The system will listen in the currently selected app language.
+
+================================================================================
+
+© 2025 AI Form Assistant | ElevateDynasty

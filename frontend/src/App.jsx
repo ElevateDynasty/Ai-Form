@@ -41,15 +41,43 @@ export default function App(){
     };
   }, []);
 
+  // Voice feedback function
+  const speakFeedback = (message) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = language === "hi" ? "hi-IN" : "en-US";
+      utterance.rate = 1.1;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
   const commandHandlers = useMemo(()=>[
-    { pattern: /(go|open).*(dashboard)/i, action: ()=>navigate("/") },
-    { pattern: /(go|open).*(ocr|scanner)/i, action: ()=>navigate("/ocr") },
-    { pattern: /(go|open).*(voice|audio)/i, action: ()=>navigate("/audio") },
-    { pattern: /(go|open).*(form|forms)/i, action: ()=>navigate("/forms") },
-    { pattern: /(go|open).*(pdf)/i, action: ()=>navigate("/pdf-fill") },
-    { pattern: /(go|open).*(manage)/i, action: ()=> role === "admin" && navigate("/forms/manage") },
-    { pattern: /(start|run).*(ocr upload|document upload)/i, action: ()=>navigate("/ocr") },
-  ], [navigate, role]);
+    // Navigation commands
+    { pattern: /(go|open|navigate).*(home|dashboard|main)/i, action: ()=>{ navigate("/"); speakFeedback("Opening Home"); }, feedback: "Opening Home" },
+    { pattern: /(go|open|navigate).*(overview|about)/i, action: ()=>{ navigate("/overview"); speakFeedback("Opening Overview"); }, feedback: "Opening Overview" },
+    { pattern: /(go|open|navigate).*(ocr|scanner|document)/i, action: ()=>{ navigate("/ocr"); speakFeedback("Opening OCR Scanner"); }, feedback: "Opening OCR Scanner" },
+    { pattern: /(go|open|navigate).*(voice|audio|speech)/i, action: ()=>{ navigate("/audio"); speakFeedback("Opening Voice Tools"); }, feedback: "Opening Voice Tools" },
+    { pattern: /(go|open|navigate).*(form|forms)/i, action: ()=>{ navigate("/forms"); speakFeedback("Opening Forms"); }, feedback: "Opening Forms" },
+    { pattern: /(go|open|navigate).*(pdf|fill pdf)/i, action: ()=>{ navigate("/pdf-fill"); speakFeedback("Opening PDF Fill"); }, feedback: "Opening PDF Fill" },
+    { pattern: /(go|open|navigate).*(ai|text processing|llm)/i, action: ()=>{ navigate("/llm"); speakFeedback("Opening AI Tools"); }, feedback: "Opening AI Tools" },
+    { pattern: /(go|open|navigate).*(contact|help|support)/i, action: ()=>{ navigate("/contact"); speakFeedback("Opening Contact"); }, feedback: "Opening Contact" },
+    { pattern: /(go|open|navigate).*(manage|admin|templates)/i, action: ()=>{ if(role === "admin"){ navigate("/forms/manage"); speakFeedback("Opening Form Manager"); } else { speakFeedback("Admin access required"); } }, feedback: "Opening Form Manager" },
+    
+    // Action commands
+    { pattern: /(toggle|switch).*(language|lang)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "Switched to Hindi" : "Switched to English"); }, feedback: "Switching language" },
+    { pattern: /(toggle|switch).*(theme|mode|accessibility)/i, action: ()=>{ setAccessibilityMode(!accessibilityMode); speakFeedback(accessibilityMode ? "Accessibility mode off" : "Accessibility mode on"); }, feedback: "Toggling accessibility" },
+    { pattern: /(stop|pause|end).*(listening|voice|navigation)/i, action: ()=>{ voiceNavRecognitionRef.current?.stop(); speakFeedback("Voice navigation stopped"); }, feedback: "Stopping voice navigation" },
+    { pattern: /(log\s*out|sign\s*out|logout)/i, action: ()=>{ logout(); speakFeedback("Logging out"); }, feedback: "Logging out" },
+    { pattern: /(go\s*back|back|previous)/i, action: ()=>{ navigate(-1); speakFeedback("Going back"); }, feedback: "Going back" },
+    { pattern: /(scroll\s*up|page\s*up)/i, action: ()=>{ window.scrollBy(0, -300); speakFeedback("Scrolling up"); }, feedback: "Scrolling up" },
+    { pattern: /(scroll\s*down|page\s*down)/i, action: ()=>{ window.scrollBy(0, 300); speakFeedback("Scrolling down"); }, feedback: "Scrolling down" },
+    { pattern: /(scroll\s*top|go\s*to\s*top)/i, action: ()=>{ window.scrollTo(0, 0); speakFeedback("Scrolled to top"); }, feedback: "Scrolling to top" },
+    
+    // Help command
+    { pattern: /(help|commands|what can you do)/i, action: ()=>{ speakFeedback("Available commands: Open home, open overview, open OCR, open forms, open audio, open PDF fill, open AI tools, open contact, toggle language, toggle theme, go back, scroll up, scroll down, logout. Say open followed by page name."); }, feedback: "Listing commands" },
+  ], [navigate, role, language, accessibilityMode, logout, setLanguage]);
 
   const handleVoiceCommand = (spoken)=>{
     const text = (spoken || "").trim();
@@ -57,11 +85,12 @@ export default function App(){
     for(const handler of commandHandlers){
       if(handler.pattern.test(text)){
         handler.action?.();
-        setVoiceNavStatus(`Navigating → ${text}`);
+        setVoiceNavStatus(`✓ ${handler.feedback || text}`);
         return true;
       }
     }
-    setVoiceNavStatus(`No match for "${text}"`);
+    speakFeedback(`Command not recognized: ${text}`);
+    setVoiceNavStatus(`❌ No match for "${text}"`);
     return false;
   };
 
