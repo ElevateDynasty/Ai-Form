@@ -3,19 +3,29 @@ import os
 import re
 import sys
 import logging
+import base64
+import httpx
 from pathlib import Path
 from typing import Dict, Any, List
 
 from PIL import Image
 import pdfplumber
 
-# Make pytesseract optional
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# OCR.space API configuration
+OCR_SPACE_API_KEY = os.getenv("OCR_SPACE_API_KEY", "")
+OCR_SPACE_URL = "https://api.ocr.space/parse/image"
+
+# Make pytesseract optional (for local development)
 try:
     import pytesseract
     TESSERACT_AVAILABLE = True
 except ImportError:
     TESSERACT_AVAILABLE = False
-    logging.warning("pytesseract not installed; OCR features will be limited")
+    logger.info("pytesseract not installed; using OCR.space API")
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
 
@@ -72,15 +82,62 @@ def _extract_text_from_pdf(file_bytes: bytes) -> str:
     return combined.strip()
 
 
-def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
-    """Extract text from image using Tesseract OCR.
+def _extract_text_with_ocr_space(file_bytes: bytes, lang: str = "eng") -> str:
+    """Extract text using OCR.space API (cloud-based).
+    
+    Args:
+        file_bytes: Image file content
+        lang: Language code (eng, hin)
+    """
+    if not OCR_SPACE_API_KEY:
+        raise RuntimeError("OCR_SPACE_API_KEY environment variable not set. Get a free key at https://ocr.space/ocrapi/freekey")
+    
+    # Convert to base64
+    base64_image = base64.b64encode(file_bytes).decode('utf-8')
+    
+    # Map language codes
+    lang_map = {"eng": "eng", "hin": "hin", "eng+hin": "eng"}
+    ocr_lang = lang_map.get(lang, "eng")
+    
+    payload = {
+        "apikey": OCR_SPACE_API_KEY,
+        "base64Image": f"data:image/png;base64,{base64_image}",
+        "language": ocr_lang,
+        "isOverlayRequired": False,
+        "detectOrientation": True,
+        "scale": True,
+        "OCREngine": 2,  # Better for printed text
+    }
+    
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(OCR_SPACE_URL, data=payload)
+            result = response.json()
+        
+        if result.get("IsErroredOnProcessing"):
+            error_msg = result.get("ErrorMessage", ["Unknown error"])
+            raise RuntimeError(f"OCR.space error: {error_msg}")
+        
+        parsed_results = result.get("ParsedResults", [])
+        if not parsed_results:
+            return ""
+        
+        text = parsed_results[0].get("ParsedText", "")
+        return text.strip()
+        
+    except httpx.RequestError as e:
+        raise RuntimeError(f"OCR.space API request failed: {e}")
+
+
+def _extract_text_with_tesseract(file_bytes: bytes, lang: str = "eng") -> str:
+    """Extract text from image using local Tesseract OCR.
     
     Args:
         file_bytes: Image file content
         lang: Tesseract language code (eng, hin, eng+hin)
     """
     if not TESSERACT_AVAILABLE:
-        raise RuntimeError("Tesseract OCR is not available. Please install pytesseract and Tesseract OCR.")
+        raise RuntimeError("Tesseract not available locally")
     
     _ensure_tesseract_path()
     image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
@@ -97,37 +154,59 @@ def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
         else:
             raise
     except Exception as e:
-        raise RuntimeError(f"OCR failed: {e}")
+        raise RuntimeError(f"Tesseract OCR failed: {e}")
     
     return text
 
 
-def get_tesseract_info() -> Dict[str, Any]:
-    """Get Tesseract installation info for debugging."""
-    if not TESSERACT_AVAILABLE:
-        return {
-            "available": False,
-            "version": None,
-            "path": None,
-            "languages": [],
-            "error": "pytesseract not installed"
-        }
+def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
+    """Extract text from image - tries local Tesseract first, falls back to OCR.space.
     
-    _ensure_tesseract_path()
+    Args:
+        file_bytes: Image file content
+        lang: Language code (eng, hin, eng+hin)
+    """
+    # Try local Tesseract first (faster, no API limits)
+    if TESSERACT_AVAILABLE and _check_tesseract_available():
+        try:
+            logger.info("Using local Tesseract OCR")
+            return _extract_text_with_tesseract(file_bytes, lang)
+        except Exception as e:
+            logger.warning(f"Tesseract failed, trying OCR.space: {e}")
+    
+    # Fall back to OCR.space API
+    if OCR_SPACE_API_KEY:
+        logger.info("Using OCR.space API")
+        return _extract_text_with_ocr_space(file_bytes, lang)
+    
+    raise RuntimeError(
+        "No OCR method available. Either install Tesseract locally or set OCR_SPACE_API_KEY environment variable. "
+        "Get a free API key at https://ocr.space/ocrapi/freekey"
+    )
+
+
+def get_tesseract_info() -> Dict[str, Any]:
+    """Get OCR availability info for debugging."""
     info = {
-        "available": False,
+        "tesseract_available": False,
+        "ocr_space_available": bool(OCR_SPACE_API_KEY),
         "version": None,
-        "path": pytesseract.pytesseract.tesseract_cmd,
+        "path": None,
         "languages": [],
+        "recommended": "ocr_space" if OCR_SPACE_API_KEY else "tesseract",
     }
-    try:
-        info["version"] = str(pytesseract.get_tesseract_version())
-        info["available"] = True
-        # Get available languages
-        langs = pytesseract.get_languages()
-        info["languages"] = langs if langs else ["eng"]
-    except Exception as e:
-        info["error"] = str(e)
+    
+    if TESSERACT_AVAILABLE:
+        _ensure_tesseract_path()
+        try:
+            info["version"] = str(pytesseract.get_tesseract_version())
+            info["tesseract_available"] = True
+            info["path"] = pytesseract.pytesseract.tesseract_cmd
+            langs = pytesseract.get_languages()
+            info["languages"] = langs if langs else ["eng"]
+        except Exception as e:
+            info["tesseract_error"] = str(e)
+    
     return info
 
 
