@@ -1,5 +1,7 @@
 from typing import Dict, Any, List
 import re
+import os
+import json
 
 def clean_text(text: str) -> str:
     cleaned = text.strip()
@@ -92,6 +94,90 @@ def generate_form_from_prompt(prompt: str) -> Dict[str, Any]:
     return {
         "fields": fields,
         "meta": {
-            "generated_from": prompt
+            "generated_from": prompt,
+            "generator": "heuristic"
         }
     }
+
+
+def generate_form_with_ai(prompt: str) -> Dict[str, Any]:
+    """
+    Generates a form schema using Hugging Face Router API with Kimi-K2 model.
+    Falls back to heuristic if AI fails.
+    """
+    hf_token = os.getenv("HF_TOKEN")
+    
+    if not hf_token:
+        print("HF_TOKEN not found, using heuristic")
+        return generate_form_from_prompt(prompt)
+    
+    try:
+        from openai import OpenAI
+        
+        client = OpenAI(
+            base_url="https://router.huggingface.co/v1",
+            api_key=hf_token,
+        )
+        
+        system_prompt = """You are a form schema generator. Given a user's description, create a JSON form schema.
+
+Return ONLY valid JSON with this exact structure (no markdown, no explanation):
+{
+  "fields": [
+    {
+      "name": "field_name_snake_case",
+      "label": "Human Readable Label",
+      "type": "text|email|tel|number|date|textarea|select",
+      "required": true|false,
+      "fullWidth": true|false,
+      "placeholder": "optional placeholder text",
+      "options": ["only for select type"]
+    }
+  ]
+}
+
+Field types: text, email, tel, number, date, textarea, select
+Use snake_case for names. Generate 3-8 relevant fields."""
+
+        completion = client.chat.completions.create(
+            model="moonshotai/Kimi-K2-Thinking:novita",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Create a form for: {prompt}"}
+            ],
+            max_tokens=1500,
+            temperature=0.7
+        )
+        
+        result_text = completion.choices[0].message.content.strip()
+        
+        # Extract JSON from response
+        if "```json" in result_text:
+            result_text = result_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in result_text:
+            result_text = result_text.split("```")[1].split("```")[0].strip()
+        
+        # Find JSON object in response
+        start_idx = result_text.find("{")
+        end_idx = result_text.rfind("}") + 1
+        if start_idx != -1 and end_idx > start_idx:
+            result_text = result_text[start_idx:end_idx]
+        
+        schema = json.loads(result_text)
+        
+        if "fields" not in schema or not isinstance(schema["fields"], list):
+            raise ValueError("Invalid schema structure")
+        
+        schema["meta"] = {
+            "generated_from": prompt,
+            "generator": "ai"
+        }
+        
+        return schema
+        
+    except ImportError:
+        print("openai package not installed, using heuristic")
+        return generate_form_from_prompt(prompt)
+    except Exception as e:
+        print(f"AI generation failed: {e}, using heuristic")
+        return generate_form_from_prompt(prompt)

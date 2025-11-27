@@ -26,7 +26,7 @@ _SESSIONS: Dict[str, Dict[str, str]] = {}
 from .db import get_db, init_db, seed_default_templates, SEED_TEMPLATES
 from .models import Base, FormTemplate, FormResponse
 from .services.ocr_service import extract_fields_from_document, generate_schema_from_document, get_tesseract_info
-from .services.llm_service import clean_text, generate_form_from_prompt
+from .services.llm_service import clean_text, generate_form_from_prompt, generate_form_with_ai
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
 from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases, translate_text
@@ -297,7 +297,8 @@ async def generate_form(
         raise HTTPException(status_code=400, detail="Prompt is required")
     
     try:
-        schema = generate_form_from_prompt(req.prompt)
+        # Use AI generation (falls back to heuristic if unavailable)
+        schema = generate_form_with_ai(req.prompt)
         return {"schema": schema, "prompt": req.prompt}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
