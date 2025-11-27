@@ -79,7 +79,7 @@ export default function LLMPage(){
           right: 40,
           width: 60,
           height: 3,
-          background: "linear-gradient(90deg, transparent, var(--gold), transparent)",
+          background: "linear-gradient(90deg, transparent, #00f5ff, #bf00ff, transparent)",
           borderRadius: 2
         }} />
         
@@ -89,18 +89,27 @@ export default function LLMPage(){
               fontSize: 10, 
               textTransform: "uppercase", 
               letterSpacing: "0.15em", 
-              color: "var(--gold)", 
+              color: "#00f5ff", 
               marginBottom: 6,
-              fontWeight: 600 
+              fontWeight: 600,
+              fontFamily: "'Orbitron', sans-serif"
             }}>Artificial Intelligence</p>
-            <h3 className="section-title" style={{ fontSize: 24, marginBottom: 6, fontFamily: "'Playfair Display', Georgia, serif" }}>Text Processing</h3>
-            <p className="muted" style={{ margin: 0, fontStyle: "italic" }}>Refine, distill, and extract insights with elegance</p>
+            <h3 className="section-title" style={{ 
+              fontSize: 24, 
+              marginBottom: 6, 
+              fontFamily: "'Orbitron', sans-serif",
+              background: "linear-gradient(135deg, #00f5ff, #bf00ff)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text"
+            }}>Text Processing</h3>
+            <p className="muted" style={{ margin: 0 }}>Refine, distill, and extract insights with AI</p>
           </div>
           <span className="badge primary" style={{ 
-            background: "linear-gradient(135deg, var(--primary-light), var(--gold-light))",
-            border: "1px solid var(--gold)",
-            color: "var(--primary)",
-            fontFamily: "'Playfair Display', Georgia, serif",
+            background: "linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(191, 0, 255, 0.15))",
+            border: "1px solid rgba(0, 245, 255, 0.4)",
+            color: "#00f5ff",
+            fontFamily: "'Orbitron', sans-serif",
             letterSpacing: "0.05em"
           }}>AI Powered</span>
         </div>
@@ -113,10 +122,10 @@ export default function LLMPage(){
           display: "flex", 
           gap: 14, 
           marginBottom: 28,
-          background: "linear-gradient(135deg, var(--bg-subtle), var(--card))",
+          background: "rgba(0, 245, 255, 0.03)",
           padding: 8,
           borderRadius: 14,
-          border: "1px solid var(--border)"
+          border: "1px solid rgba(0, 245, 255, 0.15)"
         }}>
           {operations.map(op => (
             <button
@@ -130,10 +139,10 @@ export default function LLMPage(){
                 alignItems: "center",
                 gap: 6,
                 padding: "18px 16px",
-                border: operation === op.id ? "1px solid var(--gold)" : "1px solid transparent",
+                border: operation === op.id ? "1px solid #00f5ff" : "1px solid transparent",
                 borderRadius: 10,
-                background: operation === op.id ? "var(--card)" : "transparent",
-                boxShadow: operation === op.id ? "var(--shadow-sm)" : "none",
+                background: operation === op.id ? "rgba(0, 245, 255, 0.1)" : "transparent",
+                boxShadow: operation === op.id ? "0 0 20px rgba(0, 245, 255, 0.2)" : "none",
                 cursor: "pointer",
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
                 position: "relative",
@@ -141,7 +150,7 @@ export default function LLMPage(){
               }}
               onMouseEnter={(e) => {
                 if(operation !== op.id) {
-                  e.currentTarget.style.background = "var(--gold-light)";
+                  e.currentTarget.style.background = "rgba(0, 245, 255, 0.05)";
                 }
               }}
               onMouseLeave={(e) => {
@@ -154,7 +163,7 @@ export default function LLMPage(){
               <span style={{ 
                 fontWeight: 600, 
                 fontSize: 12, 
-                color: operation === op.id ? "var(--text-primary)" : "var(--muted)",
+                color: operation === op.id ? "#00f5ff" : "var(--muted)",
                 letterSpacing: "0.02em",
                 textTransform: "uppercase"
               }}>{op.label}</span>
@@ -164,21 +173,19 @@ export default function LLMPage(){
 
         <div className="form-grid" style={{ gridTemplateColumns: "1fr", gap: 24 }}>
           <div className="field">
-            <label style={{ fontFamily: "'Playfair Display', Georgia, serif", textTransform: "none", letterSpacing: "0.02em" }}>Input Text</label>
+            <label style={{ fontFamily: "'Orbitron', sans-serif", textTransform: "none", letterSpacing: "0.02em", color: "#bf00ff" }}>Input Text</label>
             <textarea
               rows={10}
               value={inputText}
               onChange={(e)=>setInputText(e.target.value)}
               placeholder="Paste your text here — OCR output, transcriptions, or any content requiring refinement..."
               style={{ 
-                fontFamily: "'Georgia', serif", 
                 fontSize: 14, 
-                lineHeight: 1.8,
-                background: "linear-gradient(180deg, var(--card) 0%, var(--bg-subtle) 100%)"
+                lineHeight: 1.8
               }}
             />
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10 }}>
-              <span className="muted" style={{ fontSize: 12, fontStyle: "italic" }}>{inputText.length} characters</span>
+              <span className="muted" style={{ fontSize: 12 }}>{inputText.length} characters</span>
               {inputText && (
                 <button 
                   type="button" 
@@ -194,7 +201,7 @@ export default function LLMPage(){
 
           <div className="field">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <label style={{ fontFamily: "'Playfair Display', Georgia, serif", textTransform: "none", letterSpacing: "0.02em" }}>Result</label>
+              <label style={{ fontFamily: "'Orbitron', sans-serif", textTransform: "none", letterSpacing: "0.02em", color: "#00ff88" }}>Result</label>
               {result && (
                 <button 
                   type="button" 
@@ -212,8 +219,6 @@ export default function LLMPage(){
               readOnly
               placeholder="Your refined result will appear here..."
               style={{ 
-                background: "linear-gradient(145deg, var(--bg-subtle) 0%, var(--card) 100%)",
-                fontFamily: "'Georgia', serif",
                 fontSize: 14,
                 lineHeight: 1.8,
                 borderStyle: "dashed"
@@ -228,7 +233,7 @@ export default function LLMPage(){
             onClick={handleExecute} 
             disabled={loading || !inputText.trim()}
             style={{ 
-              fontFamily: "'Playfair Display', Georgia, serif",
+              fontFamily: "'Orbitron', sans-serif",
               letterSpacing: "0.08em",
               fontSize: 13
             }}
@@ -247,7 +252,7 @@ export default function LLMPage(){
             right: 16,
             width: 40,
             height: 40,
-            background: "linear-gradient(135deg, var(--gold-light), transparent)",
+            background: "linear-gradient(135deg, rgba(0, 245, 255, 0.2), transparent)",
             borderRadius: "50%",
             opacity: 0.6
           }} />
@@ -256,8 +261,9 @@ export default function LLMPage(){
             marginTop: 0, 
             fontSize: 16, 
             marginBottom: 20,
-            fontFamily: "'Playfair Display', Georgia, serif",
-            letterSpacing: "0.02em"
+            fontFamily: "'Orbitron', sans-serif",
+            letterSpacing: "0.02em",
+            color: "#ff00ff"
           }}>Processing Modes</h4>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {operations.map(op => (
@@ -266,8 +272,8 @@ export default function LLMPage(){
                 style={{
                   padding: 16,
                   borderRadius: 12,
-                  background: operation === op.id ? "linear-gradient(135deg, var(--gold-light), var(--primary-light))" : "var(--bg-subtle)",
-                  border: operation === op.id ? "1px solid var(--gold)" : "1px solid var(--border)",
+                  background: operation === op.id ? "linear-gradient(135deg, rgba(0, 245, 255, 0.1), rgba(191, 0, 255, 0.1))" : "rgba(0, 245, 255, 0.03)",
+                  border: operation === op.id ? "1px solid #00f5ff" : "1px solid rgba(0, 245, 255, 0.15)",
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   cursor: "pointer",
                   position: "relative",
@@ -276,13 +282,13 @@ export default function LLMPage(){
                 onClick={() => setOperation(op.id)}
                 onMouseEnter={(e) => {
                   if(operation !== op.id) {
-                    e.currentTarget.style.borderColor = "var(--gold)";
+                    e.currentTarget.style.borderColor = "#00f5ff";
                     e.currentTarget.style.transform = "translateX(4px)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if(operation !== op.id) {
-                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.borderColor = "rgba(0, 245, 255, 0.15)";
                     e.currentTarget.style.transform = "translateX(0)";
                   }
                 }}
@@ -291,19 +297,19 @@ export default function LLMPage(){
                   <span style={{ fontSize: 18 }}>{op.icon}</span>
                   <strong style={{ 
                     fontSize: 14, 
-                    fontFamily: "'Playfair Display', Georgia, serif",
-                    color: operation === op.id ? "var(--primary)" : "var(--text-primary)"
+                    fontFamily: "'Orbitron', sans-serif",
+                    color: operation === op.id ? "#00f5ff" : "var(--text-primary)"
                   }}>{op.label}</strong>
                 </div>
-                <p className="muted" style={{ fontSize: 12, margin: 0, fontStyle: "italic" }}>{op.desc}</p>
+                <p className="muted" style={{ fontSize: 12, margin: 0 }}>{op.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         <div className="card" style={{ 
-          background: "linear-gradient(145deg, var(--bg-subtle) 0%, var(--card) 100%)",
-          border: "1px solid var(--gold)",
+          background: "linear-gradient(145deg, rgba(191, 0, 255, 0.05) 0%, rgba(0, 245, 255, 0.05) 100%)",
+          border: "1px solid rgba(191, 0, 255, 0.3)",
           position: "relative",
           overflow: "hidden"
         }}>
@@ -314,15 +320,15 @@ export default function LLMPage(){
             right: -20,
             width: 80,
             height: 80,
-            background: "radial-gradient(circle, var(--gold-light) 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(0, 245, 255, 0.2) 0%, transparent 70%)",
             opacity: 0.5
           }} />
           
           <h4 style={{ 
             marginTop: 0, 
             fontSize: 14, 
-            color: "var(--gold)",
-            fontFamily: "'Playfair Display', Georgia, serif",
+            color: "#bf00ff",
+            fontFamily: "'Orbitron', sans-serif",
             letterSpacing: "0.05em",
             marginBottom: 14
           }}>💡 Guidance</h4>
@@ -331,7 +337,6 @@ export default function LLMPage(){
             paddingLeft: 20, 
             fontSize: 13, 
             color: "var(--text-secondary)",
-            fontStyle: "italic",
             lineHeight: 1.8
           }}>
             <li style={{ marginBottom: 10 }}>Optimized for English prose</li>
