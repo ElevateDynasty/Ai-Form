@@ -21,7 +21,7 @@ export default function AudioPage(){
   const [ttsText, setTtsText] = useState('');
   const [sttLang, setSttLang] = useState('en');
   const [ttsLang, setTtsLang] = useState('en');
-  const [sttStatus, setSttStatus] = useState('Browser STT idle');
+  const [sttStatus, setSttStatus] = useState('Ready');
   const [ttsStatus, setTtsStatus] = useState('Idle');
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
@@ -30,52 +30,61 @@ export default function AudioPage(){
   
   // Server transcription states
   const [serverTranscribing, setServerTranscribing] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [sttMode, setSttMode] = useState('auto'); // 'auto', 'server', 'browser'
+  const [usingFallback, setUsingFallback] = useState(false);
   const mediaRecorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const streamRef = useRef(null);
 
   useEffect(()=>{
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if(SpeechRecognition){ setBrowserSupported(true); }
-    return ()=>{ recognitionRef.current?.stop(); };
+    return ()=>{ 
+      recognitionRef.current?.stop();
+      streamRef.current?.getTracks().forEach(track => track.stop());
+    };
   }, []);
 
+  // Browser STT functions
   const stopBrowserStt = ()=>{
     recognitionRef.current?.stop();
+    setBrowserListening(false);
   };
 
-  const startBrowserStt = ()=>{
-    setError('');
+  const startBrowserStt = (isFallback = false)=>{
+    if(isFallback) {
+      setUsingFallback(true);
+      setSttStatus('⚠️ Server failed, using browser fallback...');
+    }
+    
     if(!browserSupported){
-      setError('Browser speech recognition is not supported here');
-      return;
+      setError('Browser speech recognition is not supported');
+      return false;
     }
-    if(browserListening){
-      stopBrowserStt();
-      return;
-    }
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if(!SpeechRecognition){
-      setError('Browser speech recognition is not supported here');
-      return;
-    }
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
     recognition.lang = sttLang;
     recognition.continuous = true;
     recognition.interimResults = true;
+    
     recognition.onstart = ()=>{
       setBrowserListening(true);
-      setText('');
-      setVoiceText('');
+      if(!isFallback) {
+        setText('');
+        setVoiceText('');
+      }
       setInterimTranscript('');
-      setSttStatus('Listening via browser...');
+      setSttStatus(isFallback ? '🔄 Fallback: Listening via browser...' : '🎤 Listening via browser...');
     };
+    
     recognition.onerror = (event)=>{
-      setError(event.error === 'not-allowed' ? 'Microphone blocked for this site' : 'Browser STT error');
+      setError(event.error === 'not-allowed' ? 'Microphone blocked' : 'Browser STT error');
       stopBrowserStt();
     };
+    
     recognition.onresult = (event)=>{
       let interim = '';
       let finalChunks = [];
@@ -93,20 +102,29 @@ export default function AudioPage(){
       }
       setInterimTranscript(interim);
     };
+    
     recognition.onend = ()=>{
       setBrowserListening(false);
       recognitionRef.current = null;
       setInterimTranscript('');
-      setSttStatus(prev => prev.includes('Listening') ? 'Completed' : prev);
+      setUsingFallback(false);
+      setSttStatus('✅ Completed');
     };
+    
     recognition.start();
+    return true;
   };
 
-  // Server-side recording functions
+  // Unified recording - records audio for server transcription
   const startRecording = async () => {
     setError('');
+    setUsingFallback(false);
+    setText('');
+    setVoiceText('');
+    
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -117,17 +135,23 @@ export default function AudioPage(){
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        setRecordedBlob(blob);
         stream.getTracks().forEach(track => track.stop());
+        
+        // Automatically transcribe with server (AssemblyAI priority)
+        await transcribeWithServerAndFallback(blob);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
-      setSttStatus('Recording for server transcription...');
+      setSttStatus('🔴 Recording... (AssemblyAI will process)');
     } catch (err) {
       setError('Microphone access denied');
+      // Fallback to browser if mic access works but recording fails
+      if (browserSupported) {
+        startBrowserStt(true);
+      }
     }
   };
 
@@ -135,22 +159,18 @@ export default function AudioPage(){
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setSttStatus('Recording stopped. Click transcribe to process.');
+      setSttStatus('⏳ Processing with AssemblyAI...');
     }
   };
 
-  const transcribeWithServer = async () => {
-    if (!recordedBlob) {
-      setError('No recording to transcribe');
-      return;
-    }
-    setError('');
+  // Server transcription with automatic browser fallback
+  const transcribeWithServerAndFallback = async (blob) => {
     setServerTranscribing(true);
-    setSttStatus('Sending to AssemblyAI...');
+    setSttStatus('🤖 Sending to AssemblyAI...');
     
     try {
       const formData = new FormData();
-      formData.append('file', recordedBlob, 'recording.webm');
+      formData.append('file', blob, 'recording.webm');
       
       const res = await fetch(`${API_BASE}/voice/transcribe?lang=${sttLang}`, {
         method: 'POST',
@@ -158,20 +178,57 @@ export default function AudioPage(){
       });
       
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: 'Transcription failed' }));
+        const err = await res.json().catch(() => ({ detail: 'Server transcription failed' }));
         throw new Error(err.detail);
       }
       
       const data = await res.json();
-      setText(data.text || '');
-      setVoiceText(data.text || '');
-      setSttStatus(`Transcribed successfully${data.confidence ? ` (${Math.round(data.confidence * 100)}% confidence)` : ''}`);
-      setRecordedBlob(null);
+      
+      if (data.text) {
+        setText(data.text);
+        setVoiceText(data.text);
+        setSttStatus(`✅ AssemblyAI: Transcribed${data.confidence ? ` (${Math.round(data.confidence * 100)}%)` : ''}`);
+      } else {
+        throw new Error('Empty transcription result');
+      }
     } catch (err) {
-      setError(err.message || 'Transcription failed');
-      setSttStatus('Transcription failed');
+      console.error('Server transcription failed:', err);
+      setError(`Server failed: ${err.message}. Switching to browser...`);
+      
+      // Automatic fallback to browser STT
+      if (browserSupported) {
+        setSttStatus('🔄 Falling back to browser recognition...');
+        setTimeout(() => {
+          startBrowserStt(true);
+        }, 500);
+      } else {
+        setSttStatus('❌ Transcription failed (no fallback available)');
+      }
     }
     setServerTranscribing(false);
+  };
+
+  // Toggle recording (main button)
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else if (browserListening) {
+      stopBrowserStt();
+    } else {
+      startRecording();
+    }
+  };
+
+  // Manual browser-only mode
+  const startBrowserOnly = () => {
+    if (browserListening) {
+      stopBrowserStt();
+    } else {
+      setError('');
+      setText('');
+      setVoiceText('');
+      startBrowserStt(false);
+    }
   };
 
   const synthesize = async ()=>{
@@ -206,48 +263,69 @@ export default function AudioPage(){
           <div style={{display:"flex", alignItems:"center", gap:12}}>
             <div style={{
               width:48, height:48, borderRadius:14, 
-              background: browserListening ? "linear-gradient(135deg, #10b981, #059669)" : "linear-gradient(135deg, var(--primary), var(--accent))",
+              background: (isRecording || browserListening) 
+                ? "linear-gradient(135deg, #10b981, #059669)" 
+                : "linear-gradient(135deg, var(--primary), var(--accent))",
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:24,
-              boxShadow: browserListening ? "0 8px 24px rgba(16,185,129,0.3)" : "0 8px 24px rgba(99,102,241,0.2)"
+              boxShadow: (isRecording || browserListening) 
+                ? "0 8px 24px rgba(16,185,129,0.3)" 
+                : "0 8px 24px rgba(99,102,241,0.2)"
             }}>
               🎤
             </div>
             <div>
               <h3 className="section-title" style={{fontSize:18, margin:0}}>Voice to Text</h3>
-              <p className="muted" style={{fontSize:12, margin:0}}>Speech Recognition</p>
+              <p className="muted" style={{fontSize:12, margin:0}}>AssemblyAI + Browser Fallback</p>
             </div>
           </div>
-          <span className={`badge ${browserListening ? 'success animate-pulse' : ''}`} style={{padding:'8px 14px'}}>
-            {browserListening ? '● Recording' : 'Ready'}
+          <span className={`badge ${(isRecording || browserListening) ? 'success animate-pulse' : serverTranscribing ? 'warning animate-pulse' : ''}`} style={{padding:'8px 14px'}}>
+            {isRecording ? '● Recording' : browserListening ? '● Browser STT' : serverTranscribing ? '⏳ Processing' : 'Ready'}
           </span>
         </div>
         
-        <p className="muted" style={{ marginBottom: 24, background:"rgba(0, 245, 255, 0.05)", padding:12, borderRadius:10, fontSize:13, border:"1px solid rgba(0, 245, 255, 0.1)" }}>
-          💡 Browser-based speech recognition. Works best in Chrome/Edge. Speaks are transcribed in real-time.
+        <p className="muted" style={{ marginBottom: 24, background:"linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(0, 245, 255, 0.05))", padding:12, borderRadius:10, fontSize:13, border:"1px solid rgba(191, 0, 255, 0.15)" }}>
+          🤖 <strong>AssemblyAI</strong> is used first for accurate transcription. If it fails, automatically falls back to browser speech recognition.
         </p>
         
         {error && <div className="error" style={{marginBottom:16}}>⚠️ {error}</div>}
+        
+        {/* Status indicator */}
+        <div style={{
+          marginBottom: 16,
+          padding: 10,
+          borderRadius: 8,
+          background: usingFallback 
+            ? "rgba(245, 158, 11, 0.1)" 
+            : sttStatus.includes('AssemblyAI') 
+              ? "rgba(16, 185, 129, 0.1)" 
+              : "rgba(0, 245, 255, 0.05)",
+          border: `1px solid ${usingFallback ? "rgba(245, 158, 11, 0.3)" : "rgba(0, 245, 255, 0.1)"}`,
+          fontSize: 13,
+          textAlign: "center"
+        }}>
+          {sttStatus}
+        </div>
 
         <div className="form-grid" style={{ gridTemplateColumns: "1fr", gap: 20 }}>
           <div className="field">
             <label style={{fontWeight:600, display:"flex", alignItems:"center", gap:8}}>
               🌐 Spoken Language
             </label>
-            <select value={sttLang} onChange={(e)=>setSttLang(e.target.value)}>
+            <select value={sttLang} onChange={(e)=>setSttLang(e.target.value)} disabled={isRecording || browserListening}>
               {LANG_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
 
           <div className="field">
             <label style={{fontWeight:600, display:"flex", alignItems:"center", justifyContent:"space-between"}}>
-              <span>📝 Live Transcript</span>
+              <span>📝 Transcript</span>
               {text && <span className="badge" style={{fontSize:11}}>{text.split(' ').filter(Boolean).length} words</span>}
             </label>
             <div className="output" style={{
               minHeight:180, maxHeight:300, overflowY:'auto',
-              background: browserListening ? "rgba(0, 255, 136, 0.08)" : "rgba(0, 245, 255, 0.03)",
-              border: browserListening ? "2px solid rgba(16,185,129,0.2)" : "1px solid var(--border)",
+              background: (isRecording || browserListening) ? "rgba(0, 255, 136, 0.08)" : "rgba(0, 245, 255, 0.03)",
+              border: (isRecording || browserListening) ? "2px solid rgba(16,185,129,0.2)" : "1px solid var(--border)",
               transition: "all 0.3s ease"
             }}>
               {interimTranscript || text ? (
@@ -258,92 +336,48 @@ export default function AudioPage(){
               ) : (
                 <div style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:8, opacity:0.5}}>
                   <span style={{fontSize:32}}>🎙️</span>
-                  <span className="muted">Start speaking to see text here...</span>
+                  <span className="muted">Click record to start...</span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
+        {/* Main Record Button - Uses AssemblyAI with fallback */}
         <button 
-          className={`btn ${browserListening ? 'btn-danger' : 'btn-primary'} btn-lg`} 
-          onClick={startBrowserStt} 
-          disabled={!browserSupported}
-          style={{width:'100%', justifyContent:'center', marginTop:24}}
+          className={`btn ${(isRecording || browserListening) ? 'btn-danger' : 'btn-primary'} btn-lg`} 
+          onClick={toggleRecording}
+          disabled={serverTranscribing}
+          style={{width:'100%', justifyContent:'center', marginTop:24, background: !(isRecording || browserListening) ? "linear-gradient(135deg, #bf00ff, #ff00ff)" : undefined}}
         >
-          {browserListening ? (
+          {isRecording ? (
+            <><span style={{display:"inline-block", width:10, height:10, background:"#fff", borderRadius:"50%", animation:"pulse 1s infinite"}}></span> Stop & Transcribe</>
+          ) : browserListening ? (
             <><span style={{display:"inline-block", width:10, height:10, background:"#fff", borderRadius:"50%", animation:"pulse 1s infinite"}}></span> Stop Recording</>
+          ) : serverTranscribing ? (
+            '⏳ Processing...'
           ) : (
-            '🎤 Start Microphone'
+            '🎤 Start Recording (AI)'
           )}
         </button>
+
+        {/* Browser-only option */}
+        <div style={{marginTop: 16, display: "flex", gap: 10, justifyContent: "center"}}>
+          <button 
+            className="btn btn-ghost btn-sm"
+            onClick={startBrowserOnly}
+            disabled={isRecording || serverTranscribing || !browserSupported}
+            style={{fontSize: 12}}
+          >
+            {browserListening ? '⏹️ Stop Browser STT' : '🌐 Use Browser Only'}
+          </button>
+        </div>
         
         {!browserSupported && (
-          <div style={{
-            marginTop:16, padding:12, borderRadius:10, 
-            background:"rgba(239,68,68,0.08)", 
-            border:"1px solid rgba(239,68,68,0.15)",
-            textAlign:'center'
-          }}>
-            <p className="muted" style={{margin:0, fontSize:13, color:"#dc2626"}}>
-              ⚠️ Your browser does not support the Web Speech API.
-            </p>
-          </div>
-        )}
-
-        {/* Server-side Transcription Option */}
-        <div style={{
-          marginTop: 24,
-          padding: 20,
-          background: "linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(191, 0, 255, 0.02))",
-          borderRadius: 16,
-          border: "1px solid rgba(191, 0, 255, 0.2)"
-        }}>
-          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
-            <span style={{fontSize:20}}>🤖</span>
-            <h4 style={{margin:0, fontSize:14}}>Server AI Transcription</h4>
-            <span className="badge" style={{fontSize:10, background:"rgba(191,0,255,0.2)"}}>AssemblyAI</span>
-          </div>
-          <p className="muted" style={{fontSize:12, marginBottom:16}}>
-            Record audio and transcribe using AssemblyAI for better accuracy and more language support.
+          <p className="muted" style={{fontSize:11, marginTop:10, textAlign:"center", color:"#f59e0b"}}>
+            ⚠️ Browser STT not supported - AssemblyAI only mode
           </p>
-          
-          <div style={{display:"flex", gap:10, flexWrap:"wrap"}}>
-            {!isRecording ? (
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={startRecording}
-                disabled={serverTranscribing}
-                style={{background:"linear-gradient(135deg, #bf00ff, #ff00ff)"}}
-              >
-                🎙️ Record Audio
-              </button>
-            ) : (
-              <button 
-                className="btn btn-danger btn-sm"
-                onClick={stopRecording}
-              >
-                ⏹️ Stop Recording
-              </button>
-            )}
-            
-            {recordedBlob && !isRecording && (
-              <button 
-                className="btn btn-primary btn-sm"
-                onClick={transcribeWithServer}
-                disabled={serverTranscribing}
-              >
-                {serverTranscribing ? '⏳ Transcribing...' : '✨ Transcribe with AI'}
-              </button>
-            )}
-          </div>
-          
-          {(isRecording || recordedBlob) && (
-            <p className="muted" style={{fontSize:11, marginTop:10}}>
-              {isRecording ? '🔴 Recording in progress...' : recordedBlob ? '✅ Audio recorded. Ready to transcribe.' : ''}
-            </p>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Text to Speech Card */}
