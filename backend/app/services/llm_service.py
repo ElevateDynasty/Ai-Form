@@ -1,5 +1,7 @@
 from typing import Dict, Any, List
 import re
+import os
+import json
 
 def clean_text(text: str) -> str:
     cleaned = text.strip()
@@ -26,7 +28,98 @@ def merge_form_sources(form_schema: Dict[str, Any], sources: Dict[str, Any]) -> 
 
     return result
 
-def generate_form_from_prompt(prompt: str) -> Dict[str, Any]:
+
+def generate_form_from_prompt_openai(prompt: str) -> Dict[str, Any]:
+    """
+    Generates a form schema from a natural language prompt using OpenAI GPT.
+    Falls back to heuristic matching if OpenAI is unavailable.
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    
+    if not api_key:
+        # Fall back to heuristic method
+        return generate_form_from_prompt_heuristic(prompt)
+    
+    try:
+        import openai
+        
+        client = openai.OpenAI(api_key=api_key)
+        
+        system_prompt = """You are a form schema generator. Given a user's description, create a JSON form schema.
+        
+Return ONLY valid JSON with this exact structure:
+{
+  "fields": [
+    {
+      "name": "field_name_snake_case",
+      "label": "Human Readable Label",
+      "type": "text|email|tel|number|date|textarea|select",
+      "required": true|false,
+      "fullWidth": true|false,
+      "placeholder": "optional placeholder text",
+      "options": ["only for select type"]
+    }
+  ]
+}
+
+Field type options:
+- "text": Short text input
+- "email": Email address
+- "tel": Phone number
+- "number": Numeric input
+- "date": Date picker
+- "textarea": Long text (set fullWidth: true)
+- "select": Dropdown (include options array)
+
+Guidelines:
+- Use snake_case for field names
+- Make primary fields required
+- Use fullWidth: true for textarea and address fields
+- Include appropriate placeholders
+- Generate 3-10 relevant fields based on the form purpose"""
+
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Create a form schema for: {prompt}"}
+            ],
+            temperature=0.7,
+            max_tokens=1500
+        )
+        
+        result_text = response.choices[0].message.content.strip()
+        
+        # Extract JSON from response (handle markdown code blocks)
+        if "```json" in result_text:
+            result_text = result_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in result_text:
+            result_text = result_text.split("```")[1].split("```")[0].strip()
+        
+        schema = json.loads(result_text)
+        
+        # Validate the schema has fields
+        if "fields" not in schema or not isinstance(schema["fields"], list):
+            raise ValueError("Invalid schema structure")
+        
+        # Add metadata
+        schema["meta"] = {
+            "generated_from": prompt,
+            "generator": "openai"
+        }
+        
+        return schema
+        
+    except ImportError:
+        # openai package not installed, fall back to heuristic
+        return generate_form_from_prompt_heuristic(prompt)
+    except Exception as e:
+        # Any other error, fall back to heuristic
+        print(f"OpenAI generation failed: {e}, falling back to heuristic")
+        return generate_form_from_prompt_heuristic(prompt)
+
+
+def generate_form_from_prompt_heuristic(prompt: str) -> Dict[str, Any]:
     """
     Generates a form schema from a natural language prompt using heuristic keyword matching.
     """
@@ -92,6 +185,16 @@ def generate_form_from_prompt(prompt: str) -> Dict[str, Any]:
     return {
         "fields": fields,
         "meta": {
-            "generated_from": prompt
+            "generated_from": prompt,
+            "generator": "heuristic"
         }
     }
+
+
+# Main function that tries OpenAI first, then falls back to heuristic
+def generate_form_from_prompt(prompt: str) -> Dict[str, Any]:
+    """
+    Generates a form schema from a natural language prompt.
+    Uses OpenAI GPT if available, otherwise falls back to heuristic matching.
+    """
+    return generate_form_from_prompt_openai(prompt)

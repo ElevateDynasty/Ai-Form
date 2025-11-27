@@ -60,6 +60,9 @@ export default function AdminFormsPage(){
   const [importText, setImportText] = useState("");
   const [ingestStatus, setIngestStatus] = useState("");
   const [ingestLoading, setIngestLoading] = useState(false);
+  const [promptText, setPromptText] = useState("");
+  const [promptStatus, setPromptStatus] = useState("");
+  const [promptLoading, setPromptLoading] = useState(false);
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -187,7 +190,6 @@ export default function AdminFormsPage(){
     setIngestStatus("");
     setPromptText("");
     setPromptStatus("");
-    setGeminiStatus("");
     setStatus(""); setError("");
   };
 
@@ -283,6 +285,57 @@ export default function AdminFormsPage(){
     }
     setIngestLoading(false);
     event.target.value = "";
+  };
+
+  const handleGenerateFromPrompt = async () => {
+    if (!promptText.trim()) {
+      setError("Please enter a description of the form you want to create");
+      return;
+    }
+    setError("");
+    setPromptStatus("Generating form with AI...");
+    setPromptLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/forms/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeader },
+        body: JSON.stringify({ prompt: promptText.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Unable to generate form" }));
+        throw new Error(err.detail || "Unable to generate form");
+      }
+      const data = await res.json();
+      const schema = data.schema || {};
+      const normalized = normalizeSchema(schema);
+      
+      // Auto-generate title from prompt if not set
+      if (!formState.title && promptText.length > 0) {
+        const autoTitle = promptText.length > 50 
+          ? promptText.substring(0, 47) + "..." 
+          : promptText;
+        setFormState(prev => ({
+          ...prev,
+          title: autoTitle.charAt(0).toUpperCase() + autoTitle.slice(1),
+          fields: normalized.fields,
+          meta: normalized.meta,
+        }));
+      } else {
+        setFormState(prev => ({
+          ...prev,
+          fields: normalized.fields,
+          meta: normalized.meta,
+        }));
+      }
+      
+      const generator = schema.meta?.generator === "openai" ? "AI" : "pattern matching";
+      setPromptStatus(`Generated ${normalized.fields.length} field${normalized.fields.length === 1 ? "" : "s"} using ${generator}`);
+      setPromptText("");
+    } catch (err) {
+      setError(err.message);
+      setPromptStatus("Generation failed");
+    }
+    setPromptLoading(false);
   };
 
   const handleTranslate = async (text, callback) => {
@@ -442,6 +495,70 @@ export default function AdminFormsPage(){
               <span style={{ fontSize: 12, color: "var(--muted)" }}>PDF, PNG, JPG supported</span>
             </label>
             {ingestStatus && <p className="muted" style={{ fontSize: 13, marginTop: 12, textAlign: "center" }}>{ingestStatus}</p>}
+          </div>
+
+          {/* AI Prompt Generator */}
+          <div style={{ 
+            background: "linear-gradient(135deg, rgba(191, 0, 255, 0.08) 0%, rgba(255, 0, 255, 0.05) 100%)", 
+            borderRadius: 16, 
+            padding: 20, 
+            marginBottom: 24,
+            border: "1px solid rgba(191, 0, 255, 0.3)"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <h4 style={{ margin: 0, fontSize: 15 }}>🤖 Generate with AI</h4>
+              {promptLoading && <span className="badge warning animate-pulse">Generating...</span>}
+            </div>
+            <p className="muted" style={{ fontSize: 13, marginBottom: 14 }}>
+              Describe the form you need in natural language and let AI create the fields for you.
+            </p>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <textarea
+                value={promptText}
+                onChange={(e) => setPromptText(e.target.value)}
+                placeholder="e.g., Create a job application form with name, email, phone, resume upload, years of experience, and a cover letter section"
+                disabled={promptLoading}
+                rows={3}
+                style={{ 
+                  flex: 1, 
+                  minWidth: 280,
+                  background: "rgba(0, 0, 0, 0.2)",
+                  border: "1px solid rgba(191, 0, 255, 0.3)",
+                  borderRadius: 12,
+                  padding: 14,
+                  fontSize: 14,
+                  resize: "vertical"
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGenerateFromPrompt}
+                disabled={promptLoading || !promptText.trim()}
+                style={{ 
+                  alignSelf: "flex-start",
+                  background: "linear-gradient(135deg, #bf00ff 0%, #ff00ff 100%)",
+                  minWidth: 140
+                }}
+              >
+                {promptLoading ? "⏳ Generating..." : "✨ Generate"}
+              </button>
+            </div>
+            {promptStatus && (
+              <p className="muted" style={{ 
+                fontSize: 13, 
+                marginTop: 12, 
+                textAlign: "center",
+                color: promptStatus.includes("failed") ? "var(--error)" : "var(--success)"
+              }}>
+                {promptStatus}
+              </p>
+            )}
+            <div style={{ marginTop: 12 }}>
+              <p className="muted" style={{ fontSize: 11, opacity: 0.7 }}>
+                💡 Tips: Be specific about field types (email, phone, date), required fields, and any dropdown options you need.
+              </p>
+            </div>
           </div>
 
           {/* Fields Builder */}
