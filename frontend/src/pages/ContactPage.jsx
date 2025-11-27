@@ -67,13 +67,13 @@ export default function ContactPage() {
     <div className="animate-slide-up">
       {/* Header */}
       <div className="card" style={{
-        background: "linear-gradient(135deg, #1a1612 0%, #2d2620 50%, #3d3429 100%)",
-        color: "#faf9f7",
+        background: "linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(191, 0, 255, 0.1) 50%, rgba(255, 0, 255, 0.1) 100%)",
+        color: "var(--text-primary)",
         padding: "40px 36px",
         marginBottom: 28,
         position: "relative",
         overflow: "hidden",
-        border: "1px solid rgba(184, 149, 110, 0.3)"
+        border: "1px solid rgba(0, 245, 255, 0.3)"
       }}>
         <div style={{
           position: "absolute",
@@ -81,30 +81,34 @@ export default function ContactPage() {
           left: 0,
           right: 0,
           height: 3,
-          background: "linear-gradient(90deg, transparent, #b8956e, #c4a97d, #b8956e, transparent)"
+          background: "linear-gradient(90deg, transparent, #00f5ff, #bf00ff, #ff00ff, transparent)"
         }} />
         
         <p style={{ 
           fontSize: 11, 
           textTransform: "uppercase", 
           letterSpacing: "0.2em", 
-          color: "#c4a97d", 
+          color: "#00f5ff", 
           marginBottom: 10,
-          fontWeight: 600 
+          fontWeight: 600,
+          fontFamily: "'Orbitron', sans-serif"
         }}>
           {language === "hi" ? "संपर्क" : "Get in Touch"}
         </p>
         
         <h1 style={{ 
           fontSize: 32, 
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: "'Orbitron', sans-serif",
           marginBottom: 12,
-          color: "#faf9f7"
+          background: "linear-gradient(135deg, #00f5ff, #bf00ff, #ff00ff)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text"
         }}>
           {language === "hi" ? "हमसे संपर्क करें" : "Contact Us"}
         </h1>
         
-        <p style={{ fontSize: 15, color: "#d4cfc7", margin: 0, fontStyle: "italic" }}>
+        <p style={{ fontSize: 15, color: "var(--text-secondary)", margin: 0 }}>
           {language === "hi" 
             ? "प्रश्न, सुझाव या फीडबैक? हम सुनना पसंद करेंगे!"
             : "Questions, suggestions, or feedback? We'd love to hear from you!"}
@@ -116,9 +120,10 @@ export default function ContactPage() {
         <div className="card" style={{ padding: 28 }}>
           <h3 style={{ 
             fontSize: 18, 
-            fontFamily: "'Playfair Display', Georgia, serif",
+            fontFamily: "'Orbitron', sans-serif",
             marginTop: 0,
-            marginBottom: 20
+            marginBottom: 20,
+            color: "#00f5ff"
           }}>
             {language === "hi" ? "संदेश भेजें" : "Send a Message"}
           </h3>
@@ -185,9 +190,10 @@ export default function ContactPage() {
           <div className="card" style={{ padding: 28 }}>
             <h3 style={{ 
               fontSize: 18, 
-              fontFamily: "'Playfair Display', Georgia, serif",
+              fontFamily: "'Orbitron', sans-serif",
               marginTop: 0,
-              marginBottom: 20
+              marginBottom: 20,
+              color: "#bf00ff"
             }}>
               {language === "hi" ? "संपर्क जानकारी" : "Contact Information"}
             </h3>
@@ -201,9 +207,10 @@ export default function ContactPage() {
                     alignItems: "center",
                     gap: 14,
                     padding: 16,
-                    background: "var(--bg-subtle)",
+                    background: "rgba(0, 245, 255, 0.05)",
                     borderRadius: 12,
-                    border: "1px solid var(--border)"
+                    border: "1px solid rgba(0, 245, 255, 0.2)",
+                    transition: "all 0.2s ease"
                   }}
                 >
                   <span style={{ fontSize: 24 }}>{info.icon}</span>
@@ -216,7 +223,7 @@ export default function ContactPage() {
                         href={info.link} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        style={{ fontWeight: 500, color: "var(--primary)" }}
+                        style={{ fontWeight: 500, color: "#00f5ff" }}
                       >
                         {info.value}
                       </a>
@@ -233,9 +240,10 @@ export default function ContactPage() {
           <div className="card" style={{ padding: 28 }}>
             <h3 style={{ 
               fontSize: 18, 
-              fontFamily: "'Playfair Display', Georgia, serif",
+              fontFamily: "'Orbitron', sans-serif",
               marginTop: 0,
-              marginBottom: 20
+              marginBottom: 20,
+              color: "#ff00ff"
             }}>
               {language === "hi" ? "अक्सर पूछे जाने वाले प्रश्न" : "FAQ"}
             </h3>
@@ -246,16 +254,16 @@ export default function ContactPage() {
                   key={idx}
                   style={{
                     padding: 16,
-                    background: "linear-gradient(135deg, var(--gold-light) 0%, var(--primary-light) 100%)",
+                    background: "linear-gradient(135deg, rgba(0, 245, 255, 0.08) 0%, rgba(191, 0, 255, 0.08) 100%)",
                     borderRadius: 12,
-                    border: "1px solid var(--gold)"
+                    border: "1px solid rgba(191, 0, 255, 0.25)"
                   }}
                 >
                   <p style={{ 
                     fontWeight: 600, 
                     fontSize: 13, 
                     margin: "0 0 6px",
-                    color: "var(--primary)"
+                    color: "#00f5ff"
                   }}>
                     {faq.q}
                   </p>
