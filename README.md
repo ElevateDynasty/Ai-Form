@@ -19,14 +19,16 @@
 
 | Feature | Description |
 |---------|-------------|
-| 📄 **OCR Extraction** | Extract structured fields from PDFs and images automatically |
+| 📄 **OCR Extraction** | Extract structured fields from PDFs and images using Tesseract OCR |
 | 🎤 **Voice Input** | Browser-based speech-to-text for hands-free form filling |
 | 🔊 **Text-to-Speech** | Convert text to natural audio in English & Hindi |
 | 🤖 **AI Text Processing** | Clean, summarize, and extract key phrases using tinyBART |
-| ✨ **Smart Form Generation** | Create forms from natural language prompts using keyword detection |
 | 🌐 **Bilingual Support** | Full English/Hindi translation throughout the app |
 | 📝 **Visual Form Builder** | Admin interface to create and manage form templates |
 | 📑 **PDF Auto-Fill** | Merge JSON data with fillable PDF templates |
+| 🔗 **Share Form Links** | Generate shareable links for specific forms |
+| 📊 **Export Responses** | Download all form submissions as CSV |
+| 🔍 **Search Forms** | Filter and search through form templates |
 | 🎨 **Old Money Theme** | Elegant, luxurious UI with gold accents & refined typography |
 | ♿ **Accessibility Mode** | High-contrast UI with enhanced voice navigation |
 
@@ -72,7 +74,27 @@ AI-FORM/
 
 - **Python 3.10+** with pip
 - **Node.js 16+** with npm
+- **Tesseract OCR** (for document extraction)
 - Modern browser (Chrome/Edge recommended for voice features)
+
+### Tesseract OCR Setup
+
+**Windows:**
+1. Download installer from [UB-Mannheim/tesseract](https://github.com/UB-Mannheim/tesseract/wiki)
+2. Run installer (default path: `C:\Program Files\Tesseract-OCR\`)
+3. Select language packs during install (English + Hindi recommended)
+
+**Linux:**
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-hin
+```
+
+**macOS:**
+```bash
+brew install tesseract tesseract-lang
+```
+
+The backend auto-detects Tesseract installation. Check status: `GET /api/tesseract/status`
 
 ### Backend Setup
 
@@ -116,6 +138,7 @@ npm run dev
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/health` | GET | Service health check |
+| `/api/tesseract/status` | GET | Tesseract OCR installation status |
 
 ### Document Processing
 
@@ -150,6 +173,7 @@ npm run dev
 | `/api/forms/{id}` | DELETE | Admin | Delete template |
 | `/api/forms/ingest` | POST | Admin | Generate schema from document |
 | `/api/forms/{id}/responses` | POST | User | Submit form response |
+| `/api/forms/{id}/responses/export` | GET | Admin | Export all responses as CSV |
 | `/api/forms/{id}/responses/{rid}/download` | GET | User | Download response as JSON |
 | `/api/forms/{id}/responses/{rid}/pdf` | GET | User | Download response as PDF |
 
@@ -220,7 +244,7 @@ The services in `backend/app/services/` are designed to be swappable:
 
 | Service | Current | Upgrade Options |
 |---------|---------|-----------------|
-| OCR | PyPDF2 + basic parsing | Tesseract, Google Vision, AWS Textract |
+| OCR | Tesseract (local) | Google Vision, AWS Textract |
 | TTS | gTTS | Azure Speech, ElevenLabs |
 | AI/LLM | tinyBART (local) | OpenAI GPT, Anthropic Claude |
 | Translation | Helsinki-NLP opus-mt | Google Translate, DeepL |
