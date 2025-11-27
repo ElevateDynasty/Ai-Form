@@ -22,6 +22,7 @@ export default function App(){
     return window.localStorage?.getItem("accessibilityMode") === "on";
   });
   const [showLangMenu, setShowLangMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(()=>{
     if(accessibilityMode){
@@ -149,6 +150,52 @@ export default function App(){
             </NavLink>
           ))}
         </nav>
+
+        {/* Hamburger Menu Button */}
+        <button 
+          className="hamburger-btn"
+          onClick={() => setShowMobileMenu(!showMobileMenu)}
+          aria-label="Toggle menu"
+          aria-expanded={showMobileMenu}
+        >
+          <span className={`hamburger-icon ${showMobileMenu ? 'open' : ''}`}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </button>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {showMobileMenu && (
+            <>
+              <div 
+                className="mobile-menu-overlay"
+                onClick={() => setShowMobileMenu(false)} 
+              />
+              <motion.div
+                className="mobile-menu"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.15 }}
+              >
+                {links.map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className={({ isActive }) => (isActive ? "mobile-nav-btn active" : "mobile-nav-btn")}
+                    end={link.to === "/"}
+                    onClick={() => setShowMobileMenu(false)}
+                  >
+                    <span className="mobile-nav-icon">{link.icon}</span>
+                    {link.label}
+                  </NavLink>
+                ))}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           {/* Language Selector */}
