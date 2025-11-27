@@ -262,10 +262,11 @@ export default function App(){
           <div style={{
             display:"flex",
             alignItems:"center",
-            gap:10,
+            gap:8,
             padding:"8px 14px",
-            background:"rgba(15,23,42,0.03)",
-            borderRadius:12
+            background:"#ffffff",
+            borderRadius:12,
+            border:"1px solid var(--border)"
           }}>
             <div style={{
               width:32,
