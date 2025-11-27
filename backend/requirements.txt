@@ -5,8 +5,6 @@ pydantic
 PyPDF2
 pdfplumber
 reportlab
-openai
-whisper
 SQLAlchemy
 pytesseract
 Pillow
@@ -14,3 +12,4 @@ gTTS
 transformers
 torch
 requests
+sentencepiece

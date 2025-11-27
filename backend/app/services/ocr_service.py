@@ -2,18 +2,29 @@ import io
 import os
 import re
 import sys
+import logging
 from pathlib import Path
 from typing import Dict, Any, List
 
 from PIL import Image
 import pdfplumber
-import pytesseract
+
+# Make pytesseract optional
+try:
+    import pytesseract
+    TESSERACT_AVAILABLE = True
+except ImportError:
+    TESSERACT_AVAILABLE = False
+    logging.warning("pytesseract not installed; OCR features will be limited")
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff"}
 
 
 def _ensure_tesseract_path():
     """Configure Tesseract path for local installation."""
+    if not TESSERACT_AVAILABLE:
+        return
+        
     # Check if already configured via environment variable
     custom_path = os.getenv("TESSERACT_CMD")
     if custom_path and os.path.exists(custom_path):
@@ -34,11 +45,18 @@ def _ensure_tesseract_path():
                 return
     
     # Linux/Mac - tesseract should be in PATH
-    # No action needed, pytesseract will find it
+    # Check common Linux paths
+    linux_paths = ["/usr/bin/tesseract", "/usr/local/bin/tesseract"]
+    for path in linux_paths:
+        if os.path.exists(path):
+            pytesseract.pytesseract.tesseract_cmd = path
+            return
 
 
 def _check_tesseract_available() -> bool:
     """Check if Tesseract is properly installed and accessible."""
+    if not TESSERACT_AVAILABLE:
+        return False
     _ensure_tesseract_path()
     try:
         version = pytesseract.get_tesseract_version()
@@ -61,6 +79,10 @@ def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
         file_bytes: Image file content
         lang: Tesseract language code (eng, hin, eng+hin)
     """
+    if not TESSERACT_AVAILABLE:
+        raise RuntimeError("Tesseract OCR is not available. Please install pytesseract and Tesseract OCR.")
+    
+    _ensure_tesseract_path()
     image = Image.open(io.BytesIO(file_bytes)).convert("RGB")
     
     # OCR configuration for better accuracy
@@ -74,12 +96,23 @@ def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
             text = pytesseract.image_to_string(image, lang="eng", config=custom_config)
         else:
             raise
+    except Exception as e:
+        raise RuntimeError(f"OCR failed: {e}")
     
     return text
 
 
 def get_tesseract_info() -> Dict[str, Any]:
     """Get Tesseract installation info for debugging."""
+    if not TESSERACT_AVAILABLE:
+        return {
+            "available": False,
+            "version": None,
+            "path": None,
+            "languages": [],
+            "error": "pytesseract not installed"
+        }
+    
     _ensure_tesseract_path()
     info = {
         "available": False,
