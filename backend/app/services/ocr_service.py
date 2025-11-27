@@ -239,39 +239,266 @@ DOB_RE = re.compile(
 )
 BLANK_LINE_RE = re.compile(r"^[_\.\-\s]{3,}$")
 
+# Comprehensive field name mappings for Indian documents
+FIELD_LABEL_MAPPINGS = {
+    # Name variations
+    "name": ["name", "full name", "applicant name", "applicant's name", "candidate name", 
+             "your name", "person name", "member name", "holder name", "account holder",
+             "नाम", "पूरा नाम"],
+    "full_name": ["full name", "complete name", "name in full", "name (in full)"],
+    "first_name": ["first name", "given name", "forename", "fname", "पहला नाम"],
+    "last_name": ["last name", "surname", "family name", "lname", "उपनाम"],
+    "middle_name": ["middle name", "mname"],
+    
+    # Parent/Guardian names
+    "father_name": ["father's name", "father name", "father", "s/o", "son of", "d/o", 
+                    "daughter of", "c/o", "care of", "guardian name", "guardian's name",
+                    "पिता का नाम", "पिता", "अभिभावक"],
+    "mother_name": ["mother's name", "mother name", "mother", "माता का नाम", "माता"],
+    "husband_name": ["husband's name", "husband name", "husband", "w/o", "wife of", "पति का नाम"],
+    "spouse_name": ["spouse name", "spouse's name", "spouse", "partner name"],
+    
+    # Contact info
+    "email": ["email", "e-mail", "email address", "email id", "mail", "ईमेल"],
+    "phone": ["phone", "phone number", "telephone", "tel", "contact", "landline", "फोन"],
+    "mobile": ["mobile", "mobile number", "mobile no", "mob", "cell", "cellphone", "मोबाइल"],
+    "mobile_number": ["mobile number", "mobile no", "mob no", "contact number", "contact no"],
+    
+    # Address fields
+    "address": ["address", "full address", "residential address", "correspondence address",
+                "permanent address", "present address", "पता", "निवास"],
+    "address_line1": ["address line 1", "address 1", "house no", "flat no", "building", 
+                      "door no", "plot no"],
+    "address_line2": ["address line 2", "address 2", "street", "road", "lane", "locality", "area"],
+    "city": ["city", "town", "village", "place", "शहर", "गांव"],
+    "district": ["district", "dist", "जिला"],
+    "state": ["state", "province", "राज्य", "प्रदेश"],
+    "pincode": ["pincode", "pin code", "pin", "postal code", "zip", "zip code", "पिनकोड"],
+    "country": ["country", "nation", "देश"],
+    
+    # ID numbers
+    "aadhaar_number": ["aadhaar", "aadhar", "aadhaar number", "aadhar number", "aadhaar no",
+                       "aadhar no", "uid", "uidai", "आधार", "आधार संख्या", 
+                       "aadhaar card", "aadhar card", "unique id"],
+    "pan_number": ["pan", "pan number", "pan no", "pan card", "permanent account number", "पैन"],
+    "voter_id": ["voter id", "voter id no", "epic", "epic no", "election card", "मतदाता पहचान"],
+    "passport_number": ["passport", "passport number", "passport no", "पासपोर्ट"],
+    "driving_license": ["driving license", "driving licence", "dl", "dl no", "license no",
+                        "licence no", "ड्राइविंग लाइसेंस"],
+    "ration_card": ["ration card", "ration card no", "bpl card", "राशन कार्ड"],
+    
+    # Personal details
+    "date_of_birth": ["date of birth", "dob", "d.o.b", "birth date", "birthday", "born on",
+                      "जन्म तिथि", "जन्मदिन"],
+    "age": ["age", "आयु", "उम्र"],
+    "gender": ["gender", "sex", "लिंग"],
+    "blood_group": ["blood group", "blood type", "रक्त समूह"],
+    "marital_status": ["marital status", "married", "single", "वैवाहिक स्थिति"],
+    "nationality": ["nationality", "राष्ट्रीयता"],
+    "religion": ["religion", "धर्म"],
+    "caste": ["caste", "category", "जाति", "वर्ग"],
+    
+    # Education & Employment
+    "occupation": ["occupation", "profession", "job", "employment", "work", "व्यवसाय"],
+    "education": ["education", "qualification", "educational qualification", "शिक्षा", "योग्यता"],
+    "company": ["company", "organization", "employer", "firm", "office", "कंपनी"],
+    "designation": ["designation", "post", "position", "title", "पद"],
+    "annual_income": ["annual income", "yearly income", "income", "salary", "वार्षिक आय"],
+    
+    # Bank details
+    "account_number": ["account number", "account no", "a/c no", "bank account", "खाता संख्या"],
+    "ifsc": ["ifsc", "ifsc code", "branch code", "आईएफएससी"],
+    "bank_name": ["bank name", "bank", "बैंक का नाम"],
+    
+    # Application specific
+    "application_date": ["date", "application date", "dated", "तारीख", "दिनांक"],
+    "place": ["place", "स्थान"],
+    "signature": ["signature", "sign", "हस्ताक्षर"],
+}
 
-def _parse_fields(text: str) -> Dict[str, Any]:
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    fields: Dict[str, Any] = {}
+# Regex patterns for extracting key-value pairs
+KEY_VALUE_PATTERNS = [
+    # Pattern: "Label: Value" or "Label : Value"
+    re.compile(r"^(.+?)\s*[:]\s*(.+)$", re.IGNORECASE),
+    # Pattern: "Label - Value"
+    re.compile(r"^(.+?)\s*[-–—]\s*(.+)$", re.IGNORECASE),
+    # Pattern: "Label = Value"
+    re.compile(r"^(.+?)\s*[=]\s*(.+)$", re.IGNORECASE),
+]
 
-    # Name heuristic: first line with letters only and > 3 chars
-    for line in lines[:5]:
-        if re.match(r"^[A-Za-z ,.'-]{3,}$", line) and "name" not in line.lower():
-            fields.setdefault("full_name", line.title())
-            break
+# Specific value extraction patterns
+AADHAAR_PATTERN = re.compile(r"\b(\d{4}\s?\d{4}\s?\d{4})\b")
+PAN_PATTERN = re.compile(r"\b([A-Z]{5}\d{4}[A-Z])\b")
+PINCODE_PATTERN = re.compile(r"\b(\d{6})\b")
+DATE_PATTERN = re.compile(r"\b(\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2})\b")
 
+
+def _normalize_label(label: str) -> str:
+    """Normalize a label for matching."""
+    return re.sub(r"[^a-z0-9\s]", "", label.lower()).strip()
+
+
+def _find_canonical_field(label: str) -> str:
+    """Find the canonical field name for a given label."""
+    normalized = _normalize_label(label)
+    
+    # Direct match in mappings
+    for field_name, variations in FIELD_LABEL_MAPPINGS.items():
+        for variation in variations:
+            if normalized == _normalize_label(variation):
+                return field_name
+            # Partial match for longer labels
+            if len(normalized) > 3 and (_normalize_label(variation) in normalized or normalized in _normalize_label(variation)):
+                return field_name
+    
+    # If no match, create a slug from the label
+    return re.sub(r"[^a-z0-9]+", "_", normalized).strip("_") or "unknown"
+
+
+def _extract_specific_values(text: str) -> Dict[str, str]:
+    """Extract specific values like Aadhaar, PAN, etc. using regex patterns."""
+    values = {}
+    
+    # Aadhaar number (12 digits, may have spaces)
+    aadhaar_match = AADHAAR_PATTERN.search(text)
+    if aadhaar_match:
+        aadhaar = aadhaar_match.group(1).replace(" ", "")
+        if len(aadhaar) == 12:
+            values["aadhaar_number"] = aadhaar
+    
+    # PAN number (5 letters + 4 digits + 1 letter)
+    pan_match = PAN_PATTERN.search(text)
+    if pan_match:
+        values["pan_number"] = pan_match.group(1)
+    
+    # Email
     email_match = EMAIL_RE.search(text)
     if email_match:
-        fields["email"] = email_match.group(0)
-
+        values["email"] = email_match.group(0).lower()
+    
+    # Phone/Mobile (10 digits)
     phone_match = PHONE_RE.search(text)
     if phone_match:
-        fields["phone"] = phone_match.group(0)
+        phone = re.sub(r"[\s-]", "", phone_match.group(0))
+        if len(phone) >= 10:
+            values["mobile_number"] = phone[-10:]  # Last 10 digits
+    
+    return values
 
-    dob_match = DOB_RE.search(text)
-    if dob_match:
-        fields["date_of_birth"] = dob_match.group(1)
 
-    # Address heuristic: look for line containing keywords
-    for idx, line in enumerate(lines):
-        if any(keyword in line.lower() for keyword in ["address", "residence", "residential"]):
-            addr_lines = lines[idx : idx + 3]
-            address = " ".join(addr_lines)
-            fields["address"] = address.replace("Address", "").strip()
-            break
-
+def _parse_fields(text: str) -> Dict[str, Any]:
+    """Parse OCR text to extract field-value pairs using mapping algorithm."""
+    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    fields: Dict[str, Any] = {}
+    
+    # Step 1: Extract specific pattern-based values (Aadhaar, PAN, etc.)
+    specific_values = _extract_specific_values(text)
+    fields.update(specific_values)
+    
+    # Step 2: Parse key-value pairs from each line
+    for i, line in enumerate(lines):
+        # Skip very short lines or lines that look like headers/titles
+        if len(line) < 3:
+            continue
+        
+        # Try each key-value pattern
+        for pattern in KEY_VALUE_PATTERNS:
+            match = pattern.match(line)
+            if match:
+                label = match.group(1).strip()
+                value = match.group(2).strip()
+                
+                # Skip if label or value is too short or too long
+                if len(label) < 2 or len(label) > 50 or len(value) < 1:
+                    continue
+                
+                # Skip if value looks like another label (contains colon)
+                if ":" in value and len(value.split(":")[0]) < 20:
+                    value = value.split(":")[0].strip()
+                
+                # Clean up value
+                value = re.sub(r"[_\.]{3,}$", "", value).strip()
+                if not value:
+                    continue
+                
+                # Find canonical field name
+                field_name = _find_canonical_field(label)
+                
+                # Don't overwrite specific extracted values
+                if field_name not in fields:
+                    fields[field_name] = value
+                break
+        
+        # Also check for multi-line patterns (label on one line, value on next)
+        if i < len(lines) - 1:
+            next_line = lines[i + 1].strip()
+            normalized_line = _normalize_label(line)
+            
+            # Check if current line looks like a label
+            for field_name, variations in FIELD_LABEL_MAPPINGS.items():
+                for variation in variations:
+                    if normalized_line == _normalize_label(variation) or \
+                       (len(normalized_line) > 3 and _normalize_label(variation) in normalized_line):
+                        # Next line might be the value
+                        if next_line and not any(p.match(next_line) for p in KEY_VALUE_PATTERNS):
+                            if field_name not in fields and len(next_line) > 1:
+                                # Clean the value
+                                clean_value = re.sub(r"^[:\-=\s]+", "", next_line)
+                                clean_value = re.sub(r"[_\.]{3,}$", "", clean_value).strip()
+                                if clean_value:
+                                    fields[field_name] = clean_value
+                        break
+    
+    # Step 3: Try to extract name from first few lines if not found
+    if "name" not in fields and "full_name" not in fields:
+        for line in lines[:5]:
+            # Skip lines with colons (likely key-value pairs)
+            if ":" in line or "-" in line:
+                continue
+            # Look for a line that's likely a name (letters, spaces, common name chars)
+            if re.match(r"^[A-Za-z][A-Za-z\s\.\']{2,40}$", line):
+                # Exclude common non-name patterns
+                lower = line.lower()
+                if not any(word in lower for word in ["form", "application", "government", "department", 
+                                                       "office", "certificate", "card", "document"]):
+                    fields["full_name"] = line.title()
+                    break
+    
+    # Step 4: Extract date of birth from text if not found
+    if "date_of_birth" not in fields:
+        dob_match = DOB_RE.search(text)
+        if dob_match:
+            fields["date_of_birth"] = dob_match.group(1)
+    
+    # Step 5: Extract address - look for address-related content
+    if "address" not in fields:
+        for idx, line in enumerate(lines):
+            if any(keyword in line.lower() for keyword in ["address", "residence", "residential", "पता"]):
+                # Collect next few lines as address
+                addr_lines = []
+                for j in range(idx, min(idx + 4, len(lines))):
+                    addr_line = lines[j]
+                    # Clean up the line
+                    if ":" in addr_line:
+                        addr_line = addr_line.split(":", 1)[1].strip()
+                    if addr_line:
+                        addr_lines.append(addr_line)
+                if addr_lines:
+                    address = " ".join(addr_lines)
+                    # Remove common prefixes
+                    address = re.sub(r"^(address|residential address|present address)[:\s]*", "", 
+                                   address, flags=re.IGNORECASE).strip()
+                    if address:
+                        fields["address"] = address
+                break
+    
+    # Step 6: Extract pincode from text if not found
+    if "pincode" not in fields:
+        pincode_match = PINCODE_PATTERN.search(text)
+        if pincode_match:
+            fields["pincode"] = pincode_match.group(1)
+    
     return fields
-
 
 def extract_fields_from_document(file_bytes: bytes, filename: str) -> Dict[str, Any]:
     _ensure_tesseract_path()
