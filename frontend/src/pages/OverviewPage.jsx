@@ -109,7 +109,8 @@ export default function OverviewPage() {
           fontSize: 36, 
           fontFamily: "'Playfair Display', Georgia, serif",
           marginBottom: 16,
-          letterSpacing: "-0.5px"
+          letterSpacing: "-0.5px",
+          color: "#faf9f7"
         }}>
           AI Form Assistant
         </h1>
