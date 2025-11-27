@@ -292,10 +292,10 @@ export default function App(){
                     top: "100%",
                     right: 0,
                     marginTop: 8,
-                    background: "white",
+                    background: "var(--bg-secondary)",
                     borderRadius: 12,
-                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-                    border: "1px solid rgba(0,0,0,0.08)",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0, 245, 255, 0.1)",
+                    border: "1px solid rgba(0, 245, 255, 0.2)",
                     zIndex: 100,
                     minWidth: 160,
                     maxHeight: 320,
@@ -319,15 +319,16 @@ export default function App(){
                         width: "100%",
                         padding: "10px 12px",
                         border: "none",
-                        background: language === lang.code ? "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)" : "transparent",
+                        background: language === lang.code ? "rgba(0, 245, 255, 0.15)" : "transparent",
                         borderRadius: 8,
                         cursor: "pointer",
                         fontSize: 14,
                         textAlign: "left",
-                        transition: "background 0.08s ease"
+                        transition: "background 0.08s ease",
+                        color: "var(--text-primary)"
                       }}
                       onMouseEnter={e => {
-                        if(language !== lang.code) e.target.style.background = "rgba(0,0,0,0.04)";
+                        if(language !== lang.code) e.target.style.background = "rgba(0, 245, 255, 0.08)";
                       }}
                       onMouseLeave={e => {
                         if(language !== lang.code) e.target.style.background = "transparent";
@@ -336,10 +337,10 @@ export default function App(){
                       <span style={{ fontSize: 18 }}>{lang.flag}</span>
                       <span style={{ 
                         fontWeight: language === lang.code ? 600 : 400,
-                        color: language === lang.code ? "var(--primary)" : "inherit"
+                        color: language === lang.code ? "#00f5ff" : "inherit"
                       }}>{lang.label}</span>
                       {language === lang.code && (
-                        <span style={{ marginLeft: "auto", color: "var(--primary)" }}>✓</span>
+                        <span style={{ marginLeft: "auto", color: "#00f5ff" }}>✓</span>
                       )}
                     </button>
                   ))}
@@ -371,7 +372,7 @@ export default function App(){
             alignItems:"center",
             gap:8,
             padding:"8px 14px",
-            background:"#ffffff",
+            background:"var(--bg-card)",
             borderRadius:12,
             border:"1px solid var(--border)"
           }}>
@@ -379,19 +380,20 @@ export default function App(){
               width:32,
               height:32,
               borderRadius:10,
-              background:"linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
+              background:"linear-gradient(135deg, #00f5ff 0%, #bf00ff 100%)",
               display:"flex",
               alignItems:"center",
               justifyContent:"center",
-              color:"white",
+              color:"#000",
               fontSize:14,
-              fontWeight:600
+              fontWeight:700,
+              fontFamily:"'Orbitron', sans-serif"
             }}>
               {(role || "U")[0].toUpperCase()}
             </div>
             <div>
-              <p style={{margin:0,fontSize:12,color:"var(--muted)"}}>{t("logged_in_as")}</p>
-              <p style={{margin:0,fontSize:13,fontWeight:600,textTransform:"capitalize"}}>{role ?? "User"}</p>
+              <p style={{margin:0,fontSize:12,color:"var(--text-muted)"}}>{t("logged_in_as")}</p>
+              <p style={{margin:0,fontSize:13,fontWeight:600,textTransform:"capitalize",color:"var(--text-primary)"}}>{role ?? "User"}</p>
             </div>
             <button 
               className="btn btn-ghost btn-sm" 
@@ -399,9 +401,9 @@ export default function App(){
               title={t("logout")} 
               style={{
                 marginLeft:8,
-                background:"rgba(139,115,85,0.1)",
-                border:"1px solid var(--gold)",
-                color:"var(--primary)",
+                background:"rgba(0, 245, 255, 0.1)",
+                border:"1px solid rgba(0, 245, 255, 0.3)",
+                color:"#00f5ff",
                 padding:"6px 12px"
               }}
             >
@@ -414,15 +416,17 @@ export default function App(){
       <main className="app-main" id="main-content">
         {voiceNavStatus && voiceNavStatus !== "Voice navigation idle" && (
           <div className="animate-slide-up" style={{
-            background: voiceNavListening ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" : "rgba(15,23,42,0.03)",
-            color: voiceNavListening ? "white" : "var(--text-secondary)",
+            background: voiceNavListening ? "linear-gradient(135deg, #00f5ff 0%, #bf00ff 100%)" : "rgba(0, 245, 255, 0.1)",
+            color: voiceNavListening ? "#000" : "var(--text-secondary)",
             padding: "10px 16px",
             borderRadius: 12,
             marginBottom: 16,
             fontSize: 13,
             display: "flex",
             alignItems: "center",
-            gap: 8
+            gap: 8,
+            border: voiceNavListening ? "none" : "1px solid rgba(0, 245, 255, 0.2)",
+            boxShadow: voiceNavListening ? "0 0 30px rgba(0, 245, 255, 0.4)" : "none"
           }}>
             {voiceNavListening && <span className="animate-pulse">●</span>}
             {voiceNavStatus}

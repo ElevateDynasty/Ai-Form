@@ -77,13 +77,13 @@ export default function OverviewPage() {
     <div className="animate-slide-up">
       {/* Hero Section */}
       <div className="card" style={{
-        background: "linear-gradient(135deg, #1a1612 0%, #2d2620 50%, #3d3429 100%)",
-        color: "#faf9f7",
+        background: "linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #1a1a2e 100%)",
+        color: "#ffffff",
         padding: "48px 40px",
         marginBottom: 28,
         position: "relative",
         overflow: "hidden",
-        border: "1px solid rgba(184, 149, 110, 0.3)"
+        border: "1px solid rgba(0, 245, 255, 0.2)"
       }}>
         <div style={{
           position: "absolute",
@@ -91,14 +91,14 @@ export default function OverviewPage() {
           left: 0,
           right: 0,
           height: 3,
-          background: "linear-gradient(90deg, transparent, #b8956e, #c4a97d, #b8956e, transparent)"
+          background: "linear-gradient(90deg, transparent, #00f5ff, #bf00ff, #ff00ff, transparent)"
         }} />
         
         <p style={{ 
           fontSize: 11, 
           textTransform: "uppercase", 
           letterSpacing: "0.2em", 
-          color: "#c4a97d", 
+          color: "#00f5ff", 
           marginBottom: 12,
           fontWeight: 600 
         }}>
@@ -107,10 +107,13 @@ export default function OverviewPage() {
         
         <h1 style={{ 
           fontSize: 36, 
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: "'Orbitron', sans-serif",
           marginBottom: 16,
           letterSpacing: "-0.5px",
-          color: "#faf9f7"
+          background: "linear-gradient(135deg, #00f5ff, #bf00ff, #ff00ff)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text"
         }}>
           AI Form Assistant
         </h1>
@@ -119,8 +122,7 @@ export default function OverviewPage() {
           fontSize: 17, 
           lineHeight: 1.7, 
           maxWidth: 700, 
-          color: "#d4cfc7",
-          fontStyle: "italic"
+          color: "rgba(255, 255, 255, 0.7)"
         }}>
           {language === "hi" 
             ? "एक सुरुचिपूर्ण, AI-संचालित फॉर्म प्रोसेसिंग प्लेटफ़ॉर्म जो OCR, वॉइस इनपुट, स्मार्ट फॉर्म जनरेशन और द्विभाषी समर्थन के साथ आता है।"
@@ -130,15 +132,15 @@ export default function OverviewPage() {
         <div style={{ 
           marginTop: 24, 
           padding: "20px 24px", 
-          background: "rgba(250, 249, 247, 0.05)", 
+          background: "rgba(0, 245, 255, 0.05)", 
           borderRadius: 12, 
-          borderLeft: "3px solid #c4a97d",
+          borderLeft: "3px solid #00f5ff",
           maxWidth: 700
         }}>
           <p style={{ 
             fontSize: 14, 
             lineHeight: 1.8, 
-            color: "#d4cfc7", 
+            color: "rgba(255, 255, 255, 0.7)", 
             margin: 0 
           }}>
             {language === "hi" 
@@ -148,18 +150,10 @@ export default function OverviewPage() {
         </div>
 
         <div style={{ display: "flex", gap: 12, marginTop: 28 }}>
-          <Link to="/forms" className="btn" style={{
-            background: "rgba(184, 149, 110, 0.2)",
-            color: "#faf9f7",
-            border: "1px solid rgba(184, 149, 110, 0.5)",
-            padding: "12px 24px"
-          }}>
+          <Link to="/forms" className="btn btn-primary" style={{ padding: "12px 24px" }}>
             {language === "hi" ? "फॉर्म शुरू करें" : "Get Started"} →
           </Link>
-          <Link to="/contact" className="btn btn-ghost" style={{
-            color: "#c4a97d",
-            borderColor: "rgba(184, 149, 110, 0.3)"
-          }}>
+          <Link to="/contact" className="btn btn-secondary">
             {language === "hi" ? "संपर्क करें" : "Contact Us"}
           </Link>
         </div>
@@ -169,9 +163,12 @@ export default function OverviewPage() {
       <div style={{ marginBottom: 28 }}>
         <h2 style={{ 
           fontSize: 20, 
-          fontFamily: "'Playfair Display', Georgia, serif",
+          fontFamily: "'Orbitron', sans-serif",
           marginBottom: 20,
-          color: "var(--text-primary)"
+          background: "linear-gradient(135deg, #00f5ff, #bf00ff)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text"
         }}>
           {language === "hi" ? "मुख्य विशेषताएं" : "Key Features"}
         </h2>
@@ -185,20 +182,29 @@ export default function OverviewPage() {
                 padding: 22, 
                 textAlign: "center",
                 border: "1px solid var(--border)",
-                cursor: "default"
+                cursor: "default",
+                transition: "all 0.3s ease"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(0, 245, 255, 0.5)";
+                e.currentTarget.style.boxShadow = "0 0 30px rgba(0, 245, 255, 0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "var(--border)";
+                e.currentTarget.style.boxShadow = "none";
               }}
             >
               <div style={{ 
                 fontSize: 32, 
                 marginBottom: 12,
-                filter: "drop-shadow(0 2px 4px rgba(184, 149, 110, 0.2))"
+                filter: "drop-shadow(0 0 8px rgba(0, 245, 255, 0.4))"
               }}>
                 {feature.icon}
               </div>
               <h4 style={{ 
                 margin: "0 0 8px", 
                 fontSize: 14,
-                fontFamily: "'Playfair Display', Georgia, serif"
+                fontFamily: "'Orbitron', sans-serif"
               }}>
                 {feature.title}
               </h4>
@@ -215,9 +221,10 @@ export default function OverviewPage() {
         <div className="card" style={{ padding: 28 }}>
           <h3 style={{ 
             fontSize: 17, 
-            fontFamily: "'Playfair Display', Georgia, serif",
+            fontFamily: "'Orbitron', sans-serif",
             marginBottom: 20,
-            marginTop: 0
+            marginTop: 0,
+            color: "var(--neon-cyan)"
           }}>
             {language === "hi" ? "टेक स्टैक" : "Technology Stack"}
           </h3>
@@ -231,9 +238,18 @@ export default function OverviewPage() {
                   alignItems: "center",
                   gap: 8,
                   padding: 14,
-                  background: "var(--bg-subtle)",
+                  background: "rgba(0, 245, 255, 0.05)",
                   borderRadius: 10,
-                  border: "1px solid var(--border)"
+                  border: "1px solid var(--border)",
+                  transition: "all 0.3s ease"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(0, 245, 255, 0.3)";
+                  e.currentTarget.style.background = "rgba(0, 245, 255, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.background = "rgba(0, 245, 255, 0.05)";
                 }}
               >
                 <span style={{ fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32 }}>{tech.icon}</span>
@@ -249,9 +265,10 @@ export default function OverviewPage() {
         <div className="card" style={{ padding: 28 }}>
           <h3 style={{ 
             fontSize: 17, 
-            fontFamily: "'Playfair Display', Georgia, serif",
+            fontFamily: "'Orbitron', sans-serif",
             marginBottom: 20,
-            marginTop: 0
+            marginTop: 0,
+            color: "var(--neon-pink)"
           }}>
             {language === "hi" ? "त्वरित आंकड़े" : "Quick Stats"}
           </h3>
@@ -268,16 +285,19 @@ export default function OverviewPage() {
                 style={{
                   textAlign: "center",
                   padding: 20,
-                  background: "linear-gradient(135deg, var(--gold-light) 0%, var(--primary-light) 100%)",
+                  background: "linear-gradient(135deg, rgba(0, 245, 255, 0.1) 0%, rgba(191, 0, 255, 0.1) 100%)",
                   borderRadius: 12,
-                  border: "1px solid var(--gold)"
+                  border: "1px solid rgba(0, 245, 255, 0.2)"
                 }}
               >
                 <div style={{ 
                   fontSize: 28, 
                   fontWeight: 700, 
-                  fontFamily: "'Playfair Display', Georgia, serif",
-                  color: "var(--primary)"
+                  fontFamily: "'Orbitron', sans-serif",
+                  background: "linear-gradient(135deg, #00f5ff, #bf00ff)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text"
                 }}>
                   {stat.value}
                 </div>
@@ -289,7 +309,7 @@ export default function OverviewPage() {
           <div style={{ 
             marginTop: 20, 
             padding: 16, 
-            background: "var(--bg-subtle)", 
+            background: "rgba(0, 245, 255, 0.05)", 
             borderRadius: 10,
             border: "1px solid var(--border)"
           }}>
@@ -302,7 +322,7 @@ export default function OverviewPage() {
               href="https://github.com/ElevateDynasty/Ai-Form" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="btn btn-ghost btn-sm"
+              className="btn btn-secondary btn-sm"
               style={{ marginTop: 12 }}
             >
               ⭐ GitHub

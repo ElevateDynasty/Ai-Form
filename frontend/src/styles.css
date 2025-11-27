@@ -587,9 +587,14 @@ h1, h2, h3, h4, h5, h6, .section-title, .title {
   content: '';
   position: absolute;
   inset: 2px;
-  background: var(--bg-card);
+  background: var(--bg-secondary);
   border-radius: calc(var(--radius-lg) - 2px);
   z-index: 0;
+}
+
+.feature-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .feature-card > * {

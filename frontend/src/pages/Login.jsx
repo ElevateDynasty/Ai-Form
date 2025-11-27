@@ -95,11 +95,13 @@ export default function Login(){
               display: "flex", 
               alignItems: "center", 
               gap: 8, 
-              background: "rgba(255,255,255,0.95)",
+              background: "rgba(20, 20, 35, 0.9)",
               backdropFilter: "blur(10px)",
               padding: "10px 16px",
               borderRadius: 12,
-              boxShadow: "0 2px 12px rgba(0,0,0,0.1)"
+              boxShadow: "0 2px 12px rgba(0,0,0,0.3), 0 0 20px rgba(0, 245, 255, 0.1)",
+              border: "1px solid rgba(0, 245, 255, 0.2)",
+              color: "#ffffff"
             }}
           >
             <span style={{ fontSize: 18 }}>{currentLang.flag}</span>
@@ -118,15 +120,16 @@ export default function Login(){
                 top: "100%",
                 right: 0,
                 marginTop: 8,
-                background: "white",
+                background: "rgba(20, 20, 35, 0.95)",
                 borderRadius: 12,
-                boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-                border: "1px solid rgba(0,0,0,0.08)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 30px rgba(0, 245, 255, 0.1)",
+                border: "1px solid rgba(0, 245, 255, 0.2)",
                 zIndex: 100,
                 minWidth: 180,
                 maxHeight: 360,
                 overflowY: "auto",
-                padding: 8
+                padding: 8,
+                backdropFilter: "blur(20px)"
               }}>
                 {languages.map(lang => (
                   <button
@@ -143,15 +146,16 @@ export default function Login(){
                       width: "100%",
                       padding: "12px 14px",
                       border: "none",
-                      background: language === lang.code ? "linear-gradient(135deg, #f0f4ff 0%, #faf5ff 100%)" : "transparent",
+                      background: language === lang.code ? "rgba(0, 245, 255, 0.15)" : "transparent",
                       borderRadius: 8,
                       cursor: "pointer",
                       fontSize: 14,
                       textAlign: "left",
-                      transition: "background 0.15s"
+                      transition: "background 0.15s",
+                      color: "#ffffff"
                     }}
                     onMouseEnter={e => {
-                      if(language !== lang.code) e.target.style.background = "rgba(0,0,0,0.04)";
+                      if(language !== lang.code) e.target.style.background = "rgba(0, 245, 255, 0.08)";
                     }}
                     onMouseLeave={e => {
                       if(language !== lang.code) e.target.style.background = "transparent";
@@ -160,10 +164,10 @@ export default function Login(){
                     <span style={{ fontSize: 20 }}>{lang.flag}</span>
                     <span style={{ 
                       fontWeight: language === lang.code ? 600 : 400,
-                      color: language === lang.code ? "var(--primary)" : "inherit"
+                      color: language === lang.code ? "#00f5ff" : "inherit"
                     }}>{lang.label}</span>
                     {language === lang.code && (
-                      <span style={{ marginLeft: "auto", color: "var(--primary)" }}>✓</span>
+                      <span style={{ marginLeft: "auto", color: "#00f5ff" }}>✓</span>
                     )}
                   </button>
                 ))}
@@ -178,7 +182,7 @@ export default function Login(){
           <div className="auth-logo">AI</div>
           <div>
             <p className="eyebrow">{t('app_name')}</p>
-            <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>{t('login_title')}</h1>
+            <h1 style={{ fontFamily: "'Orbitron', sans-serif" }}>{t('login_title')}</h1>
             <p className="lead">{t('login_subtitle')}</p>
           </div>
         </div>

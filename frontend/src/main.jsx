@@ -43,57 +43,57 @@ function Dashboard(){
       description: t("doc_to_form_desc"),
       link: "/forms/manage",
       cta: t("try_now"),
-      gradient: "linear-gradient(135deg, #b8956e 0%, #8b7355 100%)",
+      gradient: "linear-gradient(135deg, #00f5ff 0%, #0080ff 100%)",
     },
     {
       title: t("voice_filling"),
       description: t("voice_filling_desc"),
       link: "/forms",
       cta: t("start_filling"),
-      gradient: "linear-gradient(135deg, #6d5a43 0%, #4a3f2f 100%)",
+      gradient: "linear-gradient(135deg, #ff00ff 0%, #bf00ff 100%)",
     },
     {
       title: t("smart_export"),
       description: t("smart_export_desc"),
       link: "/forms",
       cta: t("view_forms"),
-      gradient: "linear-gradient(135deg, #c4a97d 0%, #a08050 100%)",
+      gradient: "linear-gradient(135deg, #00ff88 0%, #00f5ff 100%)",
     },
     {
       title: t("text_ai"),
       description: t("text_ai_desc"),
       link: "/llm",
       cta: t("open_ai_tools"),
-      gradient: "linear-gradient(135deg, #8b7355 0%, #6d5a43 100%)",
+      gradient: "linear-gradient(135deg, #bf00ff 0%, #ff00ff 100%)",
     },
   ];
 
   return (
     <div className="dashboard animate-slide-up">
-      {/* Hero Section - Old Money Theme */}
+      {/* Hero Section - Neon Theme */}
       <div className="card" style={{ 
-        background: "linear-gradient(135deg, #1a1612 0%, #2d2620 50%, #3d3429 100%)", 
-        color: "#faf9f7",
+        background: "linear-gradient(135deg, #0a0a0f 0%, #12121a 50%, #1a1a2e 100%)", 
+        color: "#ffffff",
         marginBottom: 28,
         padding: "40px 36px",
-        border: "1px solid rgba(184, 149, 110, 0.3)",
+        border: "1px solid rgba(0, 245, 255, 0.2)",
         position: "relative",
         overflow: "hidden"
       }}>
-        {/* Decorative gold accent */}
+        {/* Decorative neon accent */}
         <div style={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
           height: 3,
-          background: "linear-gradient(90deg, transparent, #b8956e, #c4a97d, #b8956e, transparent)"
+          background: "linear-gradient(90deg, transparent, #00f5ff, #bf00ff, #ff00ff, transparent)"
         }} />
-        <p className="eyebrow" style={{ color: "#c4a97d", fontWeight: 600, letterSpacing: "0.15em" }}>{t("app_name")}</p>
-        <h2 style={{ fontSize: 30, fontWeight: 700, margin: "10px 0 14px", letterSpacing: "-0.5px", fontFamily: "'Playfair Display', Georgia, serif", color: "#faf9f7" }}>
+        <p className="eyebrow" style={{ color: "#00f5ff", fontWeight: 600, letterSpacing: "0.15em" }}>{t("app_name")}</p>
+        <h2 style={{ fontSize: 30, fontWeight: 700, margin: "10px 0 14px", letterSpacing: "-0.5px", fontFamily: "'Orbitron', sans-serif", background: "linear-gradient(135deg, #00f5ff, #bf00ff, #ff00ff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
           {t("welcome_title")}
         </h2>
-        <p style={{ color: "#d4cfc7", maxWidth: 600, marginBottom: 28, lineHeight: 1.7, fontStyle: "italic", fontSize: 15 }}>
+        <p style={{ color: "rgba(255, 255, 255, 0.7)", maxWidth: 600, marginBottom: 28, lineHeight: 1.7, fontSize: 15 }}>
           {t("welcome_subtitle")}
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
@@ -103,10 +103,10 @@ function Dashboard(){
               to={action.to}
               className="btn"
               style={{
-                background: "rgba(184, 149, 110, 0.15)",
+                background: "rgba(0, 245, 255, 0.1)",
                 backdropFilter: "blur(10px)",
-                color: "#faf9f7",
-                border: "1px solid rgba(184, 149, 110, 0.4)",
+                color: "#ffffff",
+                border: "1px solid rgba(0, 245, 255, 0.3)",
                 display: "flex",
                 alignItems: "center",
                 gap: 10,
@@ -114,12 +114,14 @@ function Dashboard(){
                 transition: "all 0.3s ease"
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(184, 149, 110, 0.3)";
-                e.currentTarget.style.borderColor = "#b8956e";
+                e.currentTarget.style.background = "rgba(0, 245, 255, 0.2)";
+                e.currentTarget.style.borderColor = "#00f5ff";
+                e.currentTarget.style.boxShadow = "0 0 20px rgba(0, 245, 255, 0.3)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(184, 149, 110, 0.15)";
-                e.currentTarget.style.borderColor = "rgba(184, 149, 110, 0.4)";
+                e.currentTarget.style.background = "rgba(0, 245, 255, 0.1)";
+                e.currentTarget.style.borderColor = "rgba(0, 245, 255, 0.3)";
+                e.currentTarget.style.boxShadow = "none";
               }}
             >
               <span style={{ fontSize: 20 }}>{action.icon}</span>
@@ -134,14 +136,14 @@ function Dashboard(){
 
       {/* Workflow Steps */}
       <div style={{ marginBottom: 28 }}>
-        <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 18, color: "var(--text-secondary)", fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: "0.02em" }}>{t("how_it_works")}</h3>
+        <h3 style={{ fontSize: 17, fontWeight: 600, marginBottom: 18, color: "var(--text-secondary)", fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.02em" }}>{t("how_it_works")}</h3>
         <div className="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
           {workflow.map((step, idx)=>(
             <div key={step.title} className="card" style={{ padding: 22, textAlign: "center", border: "1px solid var(--border)", transition: "all 0.3s ease" }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--gold)";
+                e.currentTarget.style.borderColor = "var(--neon-cyan)";
                 e.currentTarget.style.transform = "translateY(-4px)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(184, 149, 110, 0.15)";
+                e.currentTarget.style.boxShadow = "0 0 30px rgba(0, 245, 255, 0.2)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = "var(--border)";
@@ -153,8 +155,8 @@ function Dashboard(){
                 width: 48, 
                 height: 48, 
                 borderRadius: 14, 
-                background: "linear-gradient(135deg, var(--gold-light) 0%, var(--primary-light) 100%)",
-                border: "1px solid var(--gold)",
+                background: "linear-gradient(135deg, rgba(0, 245, 255, 0.2) 0%, rgba(191, 0, 255, 0.2) 100%)",
+                border: "1px solid rgba(0, 245, 255, 0.3)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -163,9 +165,9 @@ function Dashboard(){
               }}>
                 {step.icon}
               </div>
-              <span className="badge" style={{ marginBottom: 8, background: "var(--gold-light)", color: "var(--primary)", border: "1px solid var(--gold)" }}>{idx + 1}</span>
-              <h4 style={{ margin: "8px 0 6px", fontSize: 15, fontFamily: "'Playfair Display', Georgia, serif" }}>{step.title}</h4>
-              <p className="muted" style={{ fontSize: 13, margin: 0, fontStyle: "italic" }}>{step.detail}</p>
+              <span className="badge primary" style={{ marginBottom: 8 }}>{idx + 1}</span>
+              <h4 style={{ margin: "8px 0 6px", fontSize: 15, fontFamily: "'Orbitron', sans-serif" }}>{step.title}</h4>
+              <p className="muted" style={{ fontSize: 13, margin: 0 }}>{step.detail}</p>
             </div>
           ))}
         </div>
@@ -176,31 +178,26 @@ function Dashboard(){
         {highlights.map(card => (
           <div key={card.title} className="card" style={{ padding: 0, overflow: "hidden", border: "1px solid var(--border)", transition: "all 0.3s ease" }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--gold)";
+              e.currentTarget.style.borderColor = "rgba(0, 245, 255, 0.5)";
               e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 0 30px rgba(0, 245, 255, 0.15)";
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.borderColor = "var(--border)";
               e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
             <div style={{ 
               background: card.gradient, 
               padding: "22px 26px",
-              color: "#faf9f7"
+              color: "#000"
             }}>
-              <h4 style={{ margin: 0, fontSize: 17, fontWeight: 600, fontFamily: "'Playfair Display', Georgia, serif", letterSpacing: "0.02em" }}>{card.title}</h4>
+              <h4 style={{ margin: 0, fontSize: 17, fontWeight: 600, fontFamily: "'Orbitron', sans-serif", letterSpacing: "0.02em" }}>{card.title}</h4>
             </div>
             <div style={{ padding: 26 }}>
-              <p className="muted" style={{ marginBottom: 18, minHeight: 44, fontStyle: "italic", lineHeight: 1.6 }}>{card.description}</p>
-              <Link to={card.link} className="btn btn-ghost" style={{ padding: "10px 18px", borderColor: "var(--gold)", color: "var(--primary)" }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--gold-light)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
+              <p className="muted" style={{ marginBottom: 18, minHeight: 44, lineHeight: 1.6 }}>{card.description}</p>
+              <Link to={card.link} className="btn btn-secondary" style={{ padding: "10px 18px" }}>
                 {card.cta} →
               </Link>
             </div>
