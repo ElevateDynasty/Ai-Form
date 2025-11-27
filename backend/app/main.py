@@ -29,7 +29,7 @@ from .services.ocr_service import extract_fields_from_document, generate_schema_
 from .services.llm_service import clean_text, generate_form_from_prompt, generate_form_with_ai
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
-from .services.stt_service import transcribe_audio, get_supported_languages
+from .services.stt_service import transcribe_audio, get_supported_languages, get_realtime_token
 from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases, translate_text
 
 
@@ -329,6 +329,16 @@ async def voice_transcribe(file: UploadFile = File(...), lang: str | None = None
 async def voice_languages():
     """Get supported transcription languages."""
     return {"languages": get_supported_languages()}
+
+
+@app.get("/api/voice/realtime-token")
+async def voice_realtime_token():
+    """Get temporary token for real-time transcription WebSocket."""
+    try:
+        token = get_realtime_token()
+        return {"token": token}
+    except ValueError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/voice/speak")

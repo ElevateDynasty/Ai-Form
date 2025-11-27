@@ -4,6 +4,7 @@ Provides audio transcription using AssemblyAI API
 """
 import os
 import io
+import requests
 from typing import Optional
 
 try:
@@ -12,6 +13,35 @@ try:
 except ImportError:
     ASSEMBLYAI_AVAILABLE = False
     aai = None
+
+
+def get_realtime_token() -> str:
+    """
+    Get a temporary authentication token for AssemblyAI real-time transcription.
+    
+    Returns:
+        Temporary token string for WebSocket authentication
+    """
+    api_key = os.getenv("ASSEMBLYAI_API_KEY")
+    
+    if not api_key:
+        raise ValueError("ASSEMBLYAI_API_KEY not configured")
+    
+    try:
+        response = requests.post(
+            "https://api.assemblyai.com/v2/realtime/token",
+            headers={"authorization": api_key},
+            json={"expires_in": 3600}  # Token valid for 1 hour
+        )
+        
+        if response.status_code != 200:
+            raise ValueError(f"Failed to get token: {response.text}")
+        
+        data = response.json()
+        return data.get("token", "")
+        
+    except requests.RequestException as e:
+        raise ValueError(f"Token request failed: {str(e)}")
 
 
 def transcribe_audio(audio_bytes: bytes, language_code: Optional[str] = None) -> dict:

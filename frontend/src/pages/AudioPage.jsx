@@ -12,10 +12,12 @@ const LANG_OPTIONS = [
   { value: 'zh', label: 'Chinese' },
 ];
 
+// AssemblyAI Real-time WebSocket URL
+const ASSEMBLYAI_REALTIME_URL = 'wss://api.assemblyai.com/v2/realtime/ws';
+
 export default function AudioPage(){
   const { setVoiceText } = useAuth();
   const [browserSupported, setBrowserSupported] = useState(false);
-  const [browserListening, setBrowserListening] = useState(false);
   const [ttsLoading, setTtsLoading] = useState(false);
   const [text, setText] = useState('');
   const [ttsText, setTtsText] = useState('');
@@ -25,42 +27,204 @@ export default function AudioPage(){
   const [ttsStatus, setTtsStatus] = useState('Idle');
   const [error, setError] = useState('');
   const [audioUrl, setAudioUrl] = useState('');
-  const recognitionRef = useRef(null);
   const [interimTranscript, setInterimTranscript] = useState('');
   
-  // Server transcription states
-  const [serverTranscribing, setServerTranscribing] = useState(false);
+  // Recording states
   const [isRecording, setIsRecording] = useState(false);
-  const [sttMode, setSttMode] = useState('auto'); // 'auto', 'server', 'browser'
   const [usingFallback, setUsingFallback] = useState(false);
+  
+  // Refs
+  const recognitionRef = useRef(null);
   const mediaRecorderRef = useRef(null);
-  const chunksRef = useRef([]);
   const streamRef = useRef(null);
+  const socketRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const processorRef = useRef(null);
 
   useEffect(()=>{
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if(SpeechRecognition){ setBrowserSupported(true); }
     return ()=>{ 
-      recognitionRef.current?.stop();
-      streamRef.current?.getTracks().forEach(track => track.stop());
+      stopRecording();
     };
   }, []);
 
-  // Browser STT functions
-  const stopBrowserStt = ()=>{
-    recognitionRef.current?.stop();
-    setBrowserListening(false);
+  // Get AssemblyAI token from backend
+  const getRealtimeToken = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/voice/realtime-token`);
+      if (!res.ok) throw new Error('Failed to get token');
+      const data = await res.json();
+      return data.token;
+    } catch (err) {
+      console.error('Token error:', err);
+      return null;
+    }
   };
 
-  const startBrowserStt = (isFallback = false)=>{
-    if(isFallback) {
-      setUsingFallback(true);
-      setSttStatus('⚠️ Server failed, using browser fallback...');
+  // Start real-time streaming transcription
+  const startRealtimeTranscription = async () => {
+    setError('');
+    setText('');
+    setVoiceText('');
+    setInterimTranscript('');
+    setUsingFallback(false);
+    
+    try {
+      // Get microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 16000,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
+      streamRef.current = stream;
+      
+      // Get real-time token
+      const token = await getRealtimeToken();
+      
+      if (!token) {
+        throw new Error('Could not get AssemblyAI token');
+      }
+      
+      // Create WebSocket connection
+      const socket = new WebSocket(`${ASSEMBLYAI_REALTIME_URL}?sample_rate=16000&token=${token}`);
+      socketRef.current = socket;
+      
+      socket.onopen = () => {
+        console.log('WebSocket connected');
+        setSttStatus('🎤 Live transcription active (AssemblyAI)');
+        setIsRecording(true);
+        
+        // Set up audio processing
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        audioContextRef.current = audioContext;
+        
+        const source = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(4096, 1, 1);
+        processorRef.current = processor;
+        
+        processor.onaudioprocess = (e) => {
+          if (socket.readyState === WebSocket.OPEN) {
+            const inputData = e.inputBuffer.getChannelData(0);
+            const pcmData = convertFloat32ToInt16(inputData);
+            socket.send(pcmData.buffer);
+          }
+        };
+        
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+      };
+      
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.message_type === 'PartialTranscript') {
+          setInterimTranscript(data.text || '');
+        } else if (data.message_type === 'FinalTranscript') {
+          if (data.text) {
+            setText(prev => {
+              const next = prev ? `${prev} ${data.text}`.trim() : data.text;
+              setVoiceText(next);
+              return next;
+            });
+            setInterimTranscript('');
+          }
+        }
+      };
+      
+      socket.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        setError('Real-time connection failed. Trying browser fallback...');
+        stopRecording();
+        // Fallback to browser STT
+        if (browserSupported) {
+          setTimeout(() => startBrowserStt(true), 500);
+        }
+      };
+      
+      socket.onclose = () => {
+        console.log('WebSocket closed');
+        if (isRecording) {
+          setSttStatus('Connection closed');
+        }
+      };
+      
+    } catch (err) {
+      console.error('Start error:', err);
+      setError(`${err.message}. Trying browser fallback...`);
+      // Fallback to browser STT
+      if (browserSupported) {
+        startBrowserStt(true);
+      }
+    }
+  };
+
+  // Convert Float32Array to Int16Array for AssemblyAI
+  const convertFloat32ToInt16 = (float32Array) => {
+    const int16Array = new Int16Array(float32Array.length);
+    for (let i = 0; i < float32Array.length; i++) {
+      const s = Math.max(-1, Math.min(1, float32Array[i]));
+      int16Array[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+    }
+    return int16Array;
+  };
+
+  // Stop recording
+  const stopRecording = () => {
+    // Close WebSocket
+    if (socketRef.current) {
+      if (socketRef.current.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({ terminate_session: true }));
+      }
+      socketRef.current.close();
+      socketRef.current = null;
     }
     
-    if(!browserSupported){
-      setError('Browser speech recognition is not supported');
-      return false;
+    // Stop audio processing
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current = null;
+    }
+    
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+    
+    // Stop media stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    
+    // Stop browser recognition if active
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    
+    setIsRecording(false);
+    setInterimTranscript('');
+    if (text) {
+      setSttStatus('✅ Transcription complete');
+    } else {
+      setSttStatus('Ready');
+    }
+  };
+
+  // Browser STT fallback
+  const startBrowserStt = (isFallback = false) => {
+    if (isFallback) {
+      setUsingFallback(true);
+      setSttStatus('🔄 Fallback: Using browser recognition...');
+    }
+    
+    if (!browserSupported) {
+      setError('Browser speech recognition not supported');
+      return;
     }
     
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -70,30 +234,28 @@ export default function AudioPage(){
     recognition.continuous = true;
     recognition.interimResults = true;
     
-    recognition.onstart = ()=>{
-      setBrowserListening(true);
-      if(!isFallback) {
-        setText('');
-        setVoiceText('');
-      }
-      setInterimTranscript('');
-      setSttStatus(isFallback ? '🔄 Fallback: Listening via browser...' : '🎤 Listening via browser...');
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setSttStatus(isFallback ? '🔄 Live transcription (Browser Fallback)' : '🎤 Live transcription (Browser)');
     };
     
-    recognition.onerror = (event)=>{
+    recognition.onerror = (event) => {
       setError(event.error === 'not-allowed' ? 'Microphone blocked' : 'Browser STT error');
-      stopBrowserStt();
+      stopRecording();
     };
     
-    recognition.onresult = (event)=>{
+    recognition.onresult = (event) => {
       let interim = '';
       let finalChunks = [];
-      for(let i = event.resultIndex; i < event.results.length; i++){
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         const transcript = event.results[i][0].transcript;
-        if(event.results[i].isFinal){ finalChunks.push(transcript); }
-        else { interim += transcript; }
+        if (event.results[i].isFinal) {
+          finalChunks.push(transcript);
+        } else {
+          interim += transcript;
+        }
       }
-      if(finalChunks.length){
+      if (finalChunks.length) {
         setText(prev => {
           const next = `${prev} ${finalChunks.join(' ')}`.trim();
           setVoiceText(next);
@@ -103,126 +265,30 @@ export default function AudioPage(){
       setInterimTranscript(interim);
     };
     
-    recognition.onend = ()=>{
-      setBrowserListening(false);
+    recognition.onend = () => {
+      setIsRecording(false);
       recognitionRef.current = null;
       setInterimTranscript('');
       setUsingFallback(false);
-      setSttStatus('✅ Completed');
+      setSttStatus('✅ Transcription complete');
     };
     
     recognition.start();
-    return true;
   };
 
-  // Unified recording - records audio for server transcription
-  const startRecording = async () => {
-    setError('');
-    setUsingFallback(false);
-    setText('');
-    setVoiceText('');
-    
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
-        
-        // Automatically transcribe with server (AssemblyAI priority)
-        await transcribeWithServerAndFallback(blob);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-      setSttStatus('🔴 Recording... (AssemblyAI will process)');
-    } catch (err) {
-      setError('Microphone access denied');
-      // Fallback to browser if mic access works but recording fails
-      if (browserSupported) {
-        startBrowserStt(true);
-      }
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      setSttStatus('⏳ Processing with AssemblyAI...');
-    }
-  };
-
-  // Server transcription with automatic browser fallback
-  const transcribeWithServerAndFallback = async (blob) => {
-    setServerTranscribing(true);
-    setSttStatus('🤖 Sending to AssemblyAI...');
-    
-    try {
-      const formData = new FormData();
-      formData.append('file', blob, 'recording.webm');
-      
-      const res = await fetch(`${API_BASE}/voice/transcribe?lang=${sttLang}`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: 'Server transcription failed' }));
-        throw new Error(err.detail);
-      }
-      
-      const data = await res.json();
-      
-      if (data.text) {
-        setText(data.text);
-        setVoiceText(data.text);
-        setSttStatus(`✅ AssemblyAI: Transcribed${data.confidence ? ` (${Math.round(data.confidence * 100)}%)` : ''}`);
-      } else {
-        throw new Error('Empty transcription result');
-      }
-    } catch (err) {
-      console.error('Server transcription failed:', err);
-      setError(`Server failed: ${err.message}. Switching to browser...`);
-      
-      // Automatic fallback to browser STT
-      if (browserSupported) {
-        setSttStatus('🔄 Falling back to browser recognition...');
-        setTimeout(() => {
-          startBrowserStt(true);
-        }, 500);
-      } else {
-        setSttStatus('❌ Transcription failed (no fallback available)');
-      }
-    }
-    setServerTranscribing(false);
-  };
-
-  // Toggle recording (main button)
+  // Toggle recording
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
-    } else if (browserListening) {
-      stopBrowserStt();
     } else {
-      startRecording();
+      startRealtimeTranscription();
     }
   };
 
-  // Manual browser-only mode
+  // Browser-only mode
   const startBrowserOnly = () => {
-    if (browserListening) {
-      stopBrowserStt();
+    if (isRecording) {
+      stopRecording();
     } else {
       setError('');
       setText('');
@@ -263,12 +329,12 @@ export default function AudioPage(){
           <div style={{display:"flex", alignItems:"center", gap:12}}>
             <div style={{
               width:48, height:48, borderRadius:14, 
-              background: (isRecording || browserListening) 
+              background: isRecording 
                 ? "linear-gradient(135deg, #10b981, #059669)" 
                 : "linear-gradient(135deg, var(--primary), var(--accent))",
               display:"flex", alignItems:"center", justifyContent:"center",
               fontSize:24,
-              boxShadow: (isRecording || browserListening) 
+              boxShadow: isRecording 
                 ? "0 8px 24px rgba(16,185,129,0.3)" 
                 : "0 8px 24px rgba(99,102,241,0.2)"
             }}>
@@ -276,16 +342,16 @@ export default function AudioPage(){
             </div>
             <div>
               <h3 className="section-title" style={{fontSize:18, margin:0}}>Voice to Text</h3>
-              <p className="muted" style={{fontSize:12, margin:0}}>AssemblyAI + Browser Fallback</p>
+              <p className="muted" style={{fontSize:12, margin:0}}>Live Streaming Transcription</p>
             </div>
           </div>
-          <span className={`badge ${(isRecording || browserListening) ? 'success animate-pulse' : serverTranscribing ? 'warning animate-pulse' : ''}`} style={{padding:'8px 14px'}}>
-            {isRecording ? '● Recording' : browserListening ? '● Browser STT' : serverTranscribing ? '⏳ Processing' : 'Ready'}
+          <span className={`badge ${isRecording ? 'success animate-pulse' : ''}`} style={{padding:'8px 14px'}}>
+            {isRecording ? '● Live' : 'Ready'}
           </span>
         </div>
         
         <p className="muted" style={{ marginBottom: 24, background:"linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(0, 245, 255, 0.05))", padding:12, borderRadius:10, fontSize:13, border:"1px solid rgba(191, 0, 255, 0.15)" }}>
-          🤖 <strong>AssemblyAI</strong> is used first for accurate transcription. If it fails, automatically falls back to browser speech recognition.
+          🤖 <strong>Real-time transcription</strong> - See your words appear as you speak! Uses AssemblyAI with browser fallback.
         </p>
         
         {error && <div className="error" style={{marginBottom:16}}>⚠️ {error}</div>}
@@ -297,7 +363,7 @@ export default function AudioPage(){
           borderRadius: 8,
           background: usingFallback 
             ? "rgba(245, 158, 11, 0.1)" 
-            : sttStatus.includes('AssemblyAI') 
+            : sttStatus.includes('AssemblyAI') || sttStatus.includes('Live')
               ? "rgba(16, 185, 129, 0.1)" 
               : "rgba(0, 245, 255, 0.05)",
           border: `1px solid ${usingFallback ? "rgba(245, 158, 11, 0.3)" : "rgba(0, 245, 255, 0.1)"}`,
@@ -312,7 +378,7 @@ export default function AudioPage(){
             <label style={{fontWeight:600, display:"flex", alignItems:"center", gap:8}}>
               🌐 Spoken Language
             </label>
-            <select value={sttLang} onChange={(e)=>setSttLang(e.target.value)} disabled={isRecording || browserListening}>
+            <select value={sttLang} onChange={(e)=>setSttLang(e.target.value)} disabled={isRecording}>
               {LANG_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
           </div>
@@ -324,40 +390,35 @@ export default function AudioPage(){
             </label>
             <div className="output" style={{
               minHeight:180, maxHeight:300, overflowY:'auto',
-              background: (isRecording || browserListening) ? "rgba(0, 255, 136, 0.08)" : "rgba(0, 245, 255, 0.03)",
-              border: (isRecording || browserListening) ? "2px solid rgba(16,185,129,0.2)" : "1px solid var(--border)",
+              background: isRecording ? "rgba(0, 255, 136, 0.08)" : "rgba(0, 245, 255, 0.03)",
+              border: isRecording ? "2px solid rgba(16,185,129,0.2)" : "1px solid var(--border)",
               transition: "all 0.3s ease"
             }}>
               {interimTranscript || text ? (
                 <span>
                   {text}
-                  {interimTranscript && <span style={{color:"var(--muted)", fontStyle:"italic"}}> {interimTranscript}</span>}
+                  {interimTranscript && <span style={{color:"var(--accent)", fontStyle:"italic", opacity:0.8}}> {interimTranscript}</span>}
                 </span>
               ) : (
                 <div style={{display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"100%", gap:8, opacity:0.5}}>
                   <span style={{fontSize:32}}>🎙️</span>
-                  <span className="muted">Click record to start...</span>
+                  <span className="muted">Click record to start live transcription...</span>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Main Record Button - Uses AssemblyAI with fallback */}
+        {/* Main Record Button */}
         <button 
-          className={`btn ${(isRecording || browserListening) ? 'btn-danger' : 'btn-primary'} btn-lg`} 
+          className={`btn ${isRecording ? 'btn-danger' : 'btn-primary'} btn-lg`} 
           onClick={toggleRecording}
-          disabled={serverTranscribing}
-          style={{width:'100%', justifyContent:'center', marginTop:24, background: !(isRecording || browserListening) ? "linear-gradient(135deg, #bf00ff, #ff00ff)" : undefined}}
+          style={{width:'100%', justifyContent:'center', marginTop:24, background: !isRecording ? "linear-gradient(135deg, #bf00ff, #ff00ff)" : undefined}}
         >
           {isRecording ? (
-            <><span style={{display:"inline-block", width:10, height:10, background:"#fff", borderRadius:"50%", animation:"pulse 1s infinite"}}></span> Stop & Transcribe</>
-          ) : browserListening ? (
             <><span style={{display:"inline-block", width:10, height:10, background:"#fff", borderRadius:"50%", animation:"pulse 1s infinite"}}></span> Stop Recording</>
-          ) : serverTranscribing ? (
-            '⏳ Processing...'
           ) : (
-            '🎤 Start Recording (AI)'
+            '🎤 Start Live Transcription'
           )}
         </button>
 
@@ -366,10 +427,10 @@ export default function AudioPage(){
           <button 
             className="btn btn-ghost btn-sm"
             onClick={startBrowserOnly}
-            disabled={isRecording || serverTranscribing || !browserSupported}
+            disabled={!browserSupported}
             style={{fontSize: 12}}
           >
-            {browserListening ? '⏹️ Stop Browser STT' : '🌐 Use Browser Only'}
+            {isRecording && usingFallback ? '⏹️ Stop' : '🌐 Use Browser Only'}
           </button>
         </div>
         
