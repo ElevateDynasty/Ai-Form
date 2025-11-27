@@ -29,6 +29,7 @@ from .services.ocr_service import extract_fields_from_document, generate_schema_
 from .services.llm_service import clean_text, generate_form_from_prompt, generate_form_with_ai
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
+from .services.stt_service import transcribe_audio, get_supported_languages
 from .services.bart_service import clean_transcription, summarize_text, extract_key_phrases, translate_text
 
 
@@ -306,12 +307,28 @@ async def generate_form(
 
 @app.post("/api/voice/transcribe")
 async def voice_transcribe(file: UploadFile = File(...), lang: str | None = None):
-    """Server STT removed; clients must rely on browser-based recognition."""
+    """Transcribe audio using AssemblyAI."""
+    try:
+        audio_bytes = await file.read()
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="No audio data received")
+        
+        result = transcribe_audio(audio_bytes, language_code=lang)
+        return {
+            "text": result.get("text", ""),
+            "confidence": result.get("confidence"),
+            "status": "success"
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
-    raise HTTPException(
-        status_code=410,
-        detail="Server transcription endpoint has been retired. Please use the browser speech recognition control.",
-    )
+
+@app.get("/api/voice/languages")
+async def voice_languages():
+    """Get supported transcription languages."""
+    return {"languages": get_supported_languages()}
 
 
 @app.post("/api/voice/speak")

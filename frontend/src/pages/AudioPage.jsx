@@ -5,6 +5,11 @@ import { useAuth } from '../AuthContext';
 const LANG_OPTIONS = [
   { value: 'en', label: 'English' },
   { value: 'hi', label: 'Hindi' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  { value: 'de', label: 'German' },
+  { value: 'ja', label: 'Japanese' },
+  { value: 'zh', label: 'Chinese' },
 ];
 
 export default function AudioPage(){
@@ -22,6 +27,13 @@ export default function AudioPage(){
   const [audioUrl, setAudioUrl] = useState('');
   const recognitionRef = useRef(null);
   const [interimTranscript, setInterimTranscript] = useState('');
+  
+  // Server transcription states
+  const [serverTranscribing, setServerTranscribing] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
   useEffect(()=>{
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -88,6 +100,78 @@ export default function AudioPage(){
       setSttStatus(prev => prev.includes('Listening') ? 'Completed' : prev);
     };
     recognition.start();
+  };
+
+  // Server-side recording functions
+  const startRecording = async () => {
+    setError('');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordedBlob(blob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setSttStatus('Recording for server transcription...');
+    } catch (err) {
+      setError('Microphone access denied');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setSttStatus('Recording stopped. Click transcribe to process.');
+    }
+  };
+
+  const transcribeWithServer = async () => {
+    if (!recordedBlob) {
+      setError('No recording to transcribe');
+      return;
+    }
+    setError('');
+    setServerTranscribing(true);
+    setSttStatus('Sending to AssemblyAI...');
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', recordedBlob, 'recording.webm');
+      
+      const res = await fetch(`${API_BASE}/voice/transcribe?lang=${sttLang}`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: 'Transcription failed' }));
+        throw new Error(err.detail);
+      }
+      
+      const data = await res.json();
+      setText(data.text || '');
+      setVoiceText(data.text || '');
+      setSttStatus(`Transcribed successfully${data.confidence ? ` (${Math.round(data.confidence * 100)}% confidence)` : ''}`);
+      setRecordedBlob(null);
+    } catch (err) {
+      setError(err.message || 'Transcription failed');
+      setSttStatus('Transcription failed');
+    }
+    setServerTranscribing(false);
   };
 
   const synthesize = async ()=>{
@@ -206,6 +290,60 @@ export default function AudioPage(){
             </p>
           </div>
         )}
+
+        {/* Server-side Transcription Option */}
+        <div style={{
+          marginTop: 24,
+          padding: 20,
+          background: "linear-gradient(135deg, rgba(191, 0, 255, 0.08), rgba(191, 0, 255, 0.02))",
+          borderRadius: 16,
+          border: "1px solid rgba(191, 0, 255, 0.2)"
+        }}>
+          <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:12}}>
+            <span style={{fontSize:20}}>🤖</span>
+            <h4 style={{margin:0, fontSize:14}}>Server AI Transcription</h4>
+            <span className="badge" style={{fontSize:10, background:"rgba(191,0,255,0.2)"}}>AssemblyAI</span>
+          </div>
+          <p className="muted" style={{fontSize:12, marginBottom:16}}>
+            Record audio and transcribe using AssemblyAI for better accuracy and more language support.
+          </p>
+          
+          <div style={{display:"flex", gap:10, flexWrap:"wrap"}}>
+            {!isRecording ? (
+              <button 
+                className="btn btn-primary btn-sm"
+                onClick={startRecording}
+                disabled={serverTranscribing}
+                style={{background:"linear-gradient(135deg, #bf00ff, #ff00ff)"}}
+              >
+                🎙️ Record Audio
+              </button>
+            ) : (
+              <button 
+                className="btn btn-danger btn-sm"
+                onClick={stopRecording}
+              >
+                ⏹️ Stop Recording
+              </button>
+            )}
+            
+            {recordedBlob && !isRecording && (
+              <button 
+                className="btn btn-primary btn-sm"
+                onClick={transcribeWithServer}
+                disabled={serverTranscribing}
+              >
+                {serverTranscribing ? '⏳ Transcribing...' : '✨ Transcribe with AI'}
+              </button>
+            )}
+          </div>
+          
+          {(isRecording || recordedBlob) && (
+            <p className="muted" style={{fontSize:11, marginTop:10}}>
+              {isRecording ? '🔴 Recording in progress...' : recordedBlob ? '✅ Audio recorded. Ready to transcribe.' : ''}
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Text to Speech Card */}

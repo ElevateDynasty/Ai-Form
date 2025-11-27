@@ -16,3 +16,4 @@ sentencepiece
 httpx
 python-dotenv
 openai
+assemblyai
