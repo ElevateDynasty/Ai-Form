@@ -11,6 +11,8 @@ import FormsPage from "./pages/FormsPage";
 import AdminFormsPage from "./pages/AdminFormsPage";
 import PdfFillPage from "./pages/PdfFillPage";
 import LLMPage from "./pages/LLMPage";
+import OverviewPage from "./pages/OverviewPage";
+import ContactPage from "./pages/ContactPage";
 import RequireAuth from "./RequireAuth";
 
 function Dashboard(){
@@ -223,6 +225,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
               <Route path="forms/manage" element={<AdminFormsPage />} />
               <Route path="pdf-fill" element={<PdfFillPage />} />
               <Route path="llm" element={<LLMPage />} />
+              <Route path="overview" element={<OverviewPage />} />
+              <Route path="contact" element={<ContactPage />} />
             </Route>
             <Route path="/auth" element={<Login />} />
             <Route path="*" element={<Navigate to="/" replace />} />

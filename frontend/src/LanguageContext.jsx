@@ -23,11 +23,13 @@ const TRANSLATIONS = {
     
     // Navigation
     nav_home: "Home",
+    nav_overview: "Overview",
     nav_ocr: "OCR",
     nav_voice: "Voice",
     nav_forms: "Forms",
     nav_pdf: "PDF Fill",
     nav_ai: "AI Tools",
+    nav_contact: "Contact",
     nav_manage: "Manage",
     logout: "Logout",
     logged_in_as: "Logged in as",
@@ -199,11 +201,13 @@ const TRANSLATIONS = {
     
     // Navigation
     nav_home: "होम",
+    nav_overview: "अवलोकन",
     nav_ocr: "OCR",
     nav_voice: "आवाज़",
     nav_forms: "फॉर्म्स",
     nav_pdf: "PDF भरें",
     nav_ai: "AI टूल्स",
+    nav_contact: "संपर्क",
     nav_manage: "प्रबंधन",
     logout: "लॉगआउट",
     logged_in_as: "लॉग इन",

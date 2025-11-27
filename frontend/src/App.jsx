@@ -108,11 +108,13 @@ export default function App(){
   const links = useMemo(()=>{
     const base = [
       { to: "/", label: t("nav_home"), icon: "🏠" },
+      { to: "/overview", label: t("nav_overview") || "Overview", icon: "ℹ️" },
       { to: "/ocr", label: t("nav_ocr"), icon: "📄" },
       { to: "/audio", label: t("nav_voice"), icon: "🎤" },
       { to: "/forms", label: t("nav_forms"), icon: "📝" },
       { to: "/pdf-fill", label: t("nav_pdf"), icon: "📑" },
       { to: "/llm", label: t("nav_ai"), icon: "✨" },
+      { to: "/contact", label: t("nav_contact") || "Contact", icon: "📧" },
     ];
     if(role === "admin"){
       base.push({ to: "/forms/manage", label: t("nav_manage"), icon: "⚙️" });
