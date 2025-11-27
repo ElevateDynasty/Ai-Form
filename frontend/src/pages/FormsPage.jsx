@@ -340,13 +340,180 @@ export default function FormsPage(){
     }
   };
 
+  // Smart field matching - maps common OCR field names to form field variations
+  const FIELD_ALIASES = {
+    // === NAME VARIATIONS ===
+    name: ['name', 'full_name', 'fullname', 'applicant_name', 'applicants_name', 'applicant', 'your_name', 'user_name', 'username', 'candidate_name', 'student_name', 'employee_name', 'given_name', 'person_name'],
+    full_name: ['full_name', 'fullname', 'name', 'applicant_name', 'applicants_name', 'complete_name', 'your_name', 'candidate_name', 'person_name'],
+    first_name: ['first_name', 'firstname', 'fname', 'given_name', 'forename', 'christian_name'],
+    last_name: ['last_name', 'lastname', 'lname', 'surname', 'family_name', 'family'],
+    surname: ['surname', 'last_name', 'lastname', 'family_name', 'lname'],
+    middle_name: ['middle_name', 'middlename', 'mname', 'second_name'],
+    given_name: ['given_name', 'first_name', 'firstname', 'fname', 'forename'],
+    applicant_name: ['applicant_name', 'applicants_name', 'name', 'full_name', 'candidate_name', 'your_name'],
+    
+    // === PARENT/GUARDIAN NAMES ===
+    father_name: ['father_name', 'fathers_name', 'father', 'guardian_name', 'parent_name', 'dad_name', 'papa_name', 'father_full_name', 'father_husband_name'],
+    father_first_name: ['father_first_name', 'fathers_first_name', 'father_fname'],
+    father_surname: ['father_surname', 'fathers_surname', 'father_last_name', 'father_lname'],
+    father_middle_name: ['father_middle_name', 'fathers_middle_name'],
+    father_husband_name: ['father_husband_name', 'father_name', 'husband_name', 'guardian_name', 'father_or_husband'],
+    mother_name: ['mother_name', 'mothers_name', 'mother', 'mom_name', 'maa_name', 'mother_full_name', 'mothers_maiden_name'],
+    spouse_name: ['spouse_name', 'husband_name', 'wife_name', 'partner_name', 'spouse'],
+    husband_name: ['husband_name', 'spouse_name', 'partner_name'],
+    guardian_name: ['guardian_name', 'father_name', 'mother_name', 'parent_name', 'caretaker_name'],
+    relative_name: ['relative_name', 'father_name', 'mother_name', 'husband_name', 'guardian_name', 'relation_name'],
+    father_spouse_name: ['father_spouse_name', 'father_name', 'spouse_name', 'husband_name'],
+    nominee_name: ['nominee_name', 'nominee', 'beneficiary_name', 'beneficiary'],
+    nominee_relation: ['nominee_relation', 'relation_with_nominee', 'nominee_relationship'],
+    emergency_contact_name: ['emergency_contact_name', 'emergency_name', 'emergency_person', 'emergency_contact'],
+    emergency_contact_phone: ['emergency_contact_phone', 'emergency_phone', 'emergency_mobile', 'emergency_number'],
+    
+    // === EMAIL VARIATIONS ===
+    email: ['email', 'email_address', 'emailaddress', 'e_mail', 'mail', 'applicant_email', 'your_email', 'contact_email', 'user_email', 'email_id', 'emailid'],
+    
+    // === PHONE/MOBILE VARIATIONS ===
+    phone: ['phone', 'phone_number', 'phonenumber', 'contact', 'contact_number', 'telephone', 'tel', 'phone_no', 'landline'],
+    mobile: ['mobile', 'mobile_number', 'mobilenumber', 'cell', 'cellphone', 'cell_number', 'mob', 'mobile_no'],
+    mobile_number: ['mobile_number', 'mobile', 'phone', 'phone_number', 'contact_number', 'cell', 'cell_number', 'mob_no', 'mob_number'],
+    contact_number: ['contact_number', 'phone', 'mobile', 'telephone', 'contact'],
+    
+    // === ADDRESS VARIATIONS ===
+    address: ['address', 'full_address', 'street_address', 'residential_address', 'home_address', 'mailing_address', 'applicant_address', 'your_address', 'location', 'addr'],
+    address_line1: ['address_line1', 'address_line_1', 'addressline1', 'address1', 'street_address', 'house_no', 'flat_no', 'building'],
+    address_line2: ['address_line2', 'address_line_2', 'addressline2', 'address2', 'locality', 'area', 'street'],
+    present_address: ['present_address', 'current_address', 'temporary_address', 'correspondence_address', 'mailing_address'],
+    permanent_address: ['permanent_address', 'home_address', 'native_address', 'residential_address'],
+    current_address: ['current_address', 'present_address', 'temporary_address', 'correspondence_address'],
+    correspondence_address: ['correspondence_address', 'mailing_address', 'present_address', 'current_address', 'postal_address'],
+    residential_address: ['residential_address', 'home_address', 'permanent_address', 'residence_address'],
+    city: ['city', 'town', 'locality', 'place', 'city_name', 'municipal'],
+    village: ['village', 'town', 'city', 'gram', 'gaon'],
+    village_town: ['village_town', 'village', 'town', 'city', 'place'],
+    district: ['district', 'dist', 'zila', 'county'],
+    tehsil: ['tehsil', 'taluka', 'taluk', 'sub_district', 'mandal', 'block'],
+    state: ['state', 'province', 'region', 'pradesh'],
+    country: ['country', 'nation', 'desh'],
+    zip: ['zip', 'zipcode', 'zip_code', 'postal_code', 'postalcode', 'pin', 'pincode', 'pin_code'],
+    pincode: ['pincode', 'pin_code', 'pin', 'postal_code', 'zip', 'zipcode', 'zip_code', 'area_code'],
+    place_of_birth: ['place_of_birth', 'birth_place', 'birthplace', 'pob', 'born_at', 'birth_city'],
+    
+    // === DATE VARIATIONS ===
+    date_of_birth: ['date_of_birth', 'dob', 'birth_date', 'birthdate', 'birthday', 'born', 'applicant_dob', 'date_birth', 'd_o_b'],
+    date: ['date', 'application_date', 'submission_date', 'today_date', 'current_date'],
+    
+    // === ID DOCUMENT VARIATIONS ===
+    aadhaar: ['aadhaar', 'aadhar', 'adhaar', 'adhar', 'aadhaar_number', 'aadhar_number', 'aadhaar_no', 'aadhar_no', 'uid', 'uidai', 'aadhaar_card', 'aadhar_card'],
+    aadhaar_number: ['aadhaar_number', 'aadhar_number', 'aadhaar_no', 'aadhar_no', 'aadhaar', 'aadhar', 'uid_number', 'uid', 'uidai_number', 'adhaar_number', 'adhar_number'],
+    pan: ['pan', 'pan_number', 'pan_no', 'pan_card', 'permanent_account_number', 'pancard', 'pan_card_number'],
+    pan_number: ['pan_number', 'pan_no', 'pan', 'pan_card_number', 'panno', 'permanent_account_number'],
+    voter_id: ['voter_id', 'voterid', 'epic', 'epic_number', 'voter_card', 'election_card', 'voter_id_number', 'electoral_id'],
+    passport: ['passport', 'passport_number', 'passport_no', 'travel_document'],
+    driving_license: ['driving_license', 'driving_licence', 'dl', 'dl_number', 'license_number', 'licence_number', 'drivers_license'],
+    ration_card: ['ration_card', 'ration_card_number', 'ration_no', 'bpl_card'],
+    ration_card_number: ['ration_card_number', 'ration_card_no', 'ration_number', 'ration_card'],
+    
+    // === PERSONAL DETAILS ===
+    age: ['age', 'applicant_age', 'your_age', 'current_age', 'years_old'],
+    gender: ['gender', 'sex', 'male_female', 'applicant_gender'],
+    nationality: ['nationality', 'citizenship', 'national', 'citizen_of'],
+    religion: ['religion', 'faith', 'dharma'],
+    caste: ['caste', 'community', 'jati', 'category', 'social_category'],
+    category: ['category', 'caste', 'reservation_category', 'social_category', 'quota'],
+    marital_status: ['marital_status', 'married', 'marriage_status', 'civil_status'],
+    blood_group: ['blood_group', 'bloodgroup', 'blood_type', 'blood'],
+    title: ['title', 'salutation', 'prefix', 'mr_mrs'],
+    
+    // === EDUCATION & OCCUPATION ===
+    education: ['education', 'qualification', 'degree', 'highest_qualification', 'educational_qualification', 'edu_qualification', 'academic_qualification'],
+    qualification: ['qualification', 'education', 'degree', 'educational_qualification', 'highest_education'],
+    occupation: ['occupation', 'job', 'profession', 'work', 'designation', 'position', 'job_title', 'employment', 'vocation'],
+    employment_type: ['employment_type', 'job_type', 'work_type', 'employment_status', 'job_status'],
+    company: ['company', 'organization', 'employer', 'workplace', 'company_name', 'org', 'firm', 'office'],
+    annual_income: ['annual_income', 'yearly_income', 'income', 'income_per_year', 'total_income', 'salary'],
+    income: ['income', 'annual_income', 'monthly_income', 'salary', 'earnings'],
+    income_source: ['income_source', 'source_of_income', 'income_from', 'earning_source'],
+    source_of_income: ['source_of_income', 'income_source', 'earning_source', 'income_from'],
+    
+    // === BANK/FINANCIAL ===
+    account_type: ['account_type', 'type_of_account', 'acc_type', 'bank_account_type'],
+    account_number: ['account_number', 'account_no', 'acc_number', 'acc_no', 'bank_account', 'bank_account_number'],
+    ifsc: ['ifsc', 'ifsc_code', 'ifsc_no', 'bank_ifsc', 'branch_code'],
+    bank_name: ['bank_name', 'name_of_bank', 'bank'],
+    branch_name: ['branch_name', 'branch', 'bank_branch'],
+    initial_deposit: ['initial_deposit', 'opening_balance', 'first_deposit', 'deposit_amount'],
+    
+    // === APPLICATION SPECIFIC ===
+    application_type: ['application_type', 'type_of_application', 'app_type', 'request_type'],
+    purpose: ['purpose', 'reason', 'purpose_of', 'objective', 'requirement'],
+    status: ['status', 'application_status', 'current_status'],
+    relation_type: ['relation_type', 'relationship', 'relation', 'relative_type'],
+    vehicle_class: ['vehicle_class', 'vehicle_type', 'license_type', 'licence_type', 'dl_type'],
+    booklet_type: ['booklet_type', 'passport_type', 'pages'],
+    identification_mark1: ['identification_mark1', 'identification_mark', 'id_mark', 'id_mark1', 'visible_mark'],
+    identification_mark2: ['identification_mark2', 'id_mark2', 'second_mark'],
+    residence_since: ['residence_since', 'residing_since', 'living_since', 'stay_since', 'years_of_residence'],
+  };
+
+  // Find the best matching form field for an extracted OCR field
+  const findMatchingFormField = (extractedKey, formFields) => {
+    const normalizedKey = extractedKey.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    
+    // 1. Direct exact match
+    const exactMatch = formFields.find(f => 
+      f.name.toLowerCase() === normalizedKey || 
+      f.label?.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_') === normalizedKey
+    );
+    if (exactMatch) return exactMatch;
+    
+    // 2. Check if form field name/label contains the extracted key
+    const containsMatch = formFields.find(f => {
+      const fname = f.name.toLowerCase();
+      const flabel = (f.label || '').toLowerCase();
+      return fname.includes(normalizedKey) || normalizedKey.includes(fname) ||
+             flabel.includes(normalizedKey) || normalizedKey.includes(flabel.replace(/[^a-z0-9]/g, ''));
+    });
+    if (containsMatch) return containsMatch;
+    
+    // 3. Check alias mappings
+    const aliases = FIELD_ALIASES[normalizedKey] || [];
+    for (const alias of aliases) {
+      const aliasMatch = formFields.find(f => {
+        const fname = f.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const flabel = (f.label || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+        return fname.includes(alias) || alias.includes(fname) ||
+               flabel.includes(alias) || alias.includes(flabel);
+      });
+      if (aliasMatch) return aliasMatch;
+    }
+    
+    // 4. Reverse check - see if form field has aliases that match extracted key
+    for (const [canonical, aliasList] of Object.entries(FIELD_ALIASES)) {
+      if (aliasList.some(a => normalizedKey.includes(a) || a.includes(normalizedKey))) {
+        // Found a match in aliases, now find form field matching canonical or any alias
+        const reverseMatch = formFields.find(f => {
+          const fname = f.name.toLowerCase().replace(/[^a-z0-9]/g, '_');
+          const flabel = (f.label || '').toLowerCase().replace(/[^a-z0-9]/g, '_');
+          return fname.includes(canonical) || canonical.includes(fname) ||
+                 flabel.includes(canonical) || canonical.includes(flabel) ||
+                 aliasList.some(a => fname.includes(a) || flabel.includes(a));
+        });
+        if (reverseMatch) return reverseMatch;
+      }
+    }
+    
+    return null;
+  };
+
   const handleOcrUpload = async (event)=>{
     const file = event.target.files && event.target.files[0];
     if(!file){ return; }
     setError("");
-    setOcrStatus("Uploading document...");
+    setOcrStatus("📤 Uploading document...");
     setOcrLoading(true);
+    
     try{
+      // Step 1: Extract text/fields from document via OCR
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch(`${API_BASE}/ocr/extract`, { method: "POST", body: fd });
@@ -356,20 +523,87 @@ export default function FormsPage(){
       }
       const data = await res.json();
       const extracted = data.fields || {};
+      
+      if (Object.keys(extracted).length === 0) {
+        setOcrStatus("⚠️ No fields detected in document");
+        setStatus("OCR completed but no data found. Try a clearer image.");
+        setOcrLoading(false);
+        event.target.value = "";
+        return;
+      }
+      
+      // Step 2: Try AI-powered matching first
+      let aiMatched = {};
+      let usedAI = false;
+      
+      setOcrStatus("🤖 AI analyzing fields...");
+      
+      try {
+        const matchRes = await fetch(`${API_BASE}/ocr/match`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ocr_fields: extracted,
+            form_fields: activeFields.map(f => ({
+              name: f.name,
+              label: f.label || f.name,
+              type: f.type || "text"
+            }))
+          })
+        });
+        
+        if (matchRes.ok) {
+          const matchData = await matchRes.json();
+          aiMatched = matchData.matched || {};
+          usedAI = matchData.ai_powered && Object.keys(aiMatched).length > 0;
+        }
+      } catch (aiErr) {
+        console.log("AI matching unavailable, using local matching:", aiErr);
+      }
+      
+      // Step 3: Apply AI matches, then fill remaining with local alias matching
+      let matchedCount = 0;
       setValues(prev => {
         const next = { ...prev };
-        activeFields.forEach(field => {
-          if(extracted[field.name]){
-            next[field.name] = sanitizeFieldValue(field, extracted[field.name]);
+        const alreadyMatched = new Set();
+        
+        // First apply AI matches (higher accuracy)
+        for (const [fieldName, value] of Object.entries(aiMatched)) {
+          const field = activeFields.find(f => f.name === fieldName);
+          if (field && value) {
+            next[fieldName] = sanitizeFieldValue(field, value);
+            alreadyMatched.add(fieldName);
+            matchedCount++;
           }
-        });
+        }
+        
+        // Then try local matching for any remaining unmatched fields
+        for (const [extractedKey, extractedValue] of Object.entries(extracted)) {
+          if (!extractedValue) continue;
+          
+          const matchedField = findMatchingFormField(extractedKey, activeFields);
+          
+          if (matchedField && !alreadyMatched.has(matchedField.name)) {
+            next[matchedField.name] = sanitizeFieldValue(matchedField, extractedValue);
+            alreadyMatched.add(matchedField.name);
+            matchedCount++;
+          }
+        }
+        
         return next;
       });
-      setOcrStatus("Fields updated from OCR");
-      setStatus("Form auto-filled from document");
+      
+      if (matchedCount > 0) {
+        const methodLabel = usedAI ? "🤖 AI" : "🔍 Smart";
+        setOcrStatus(`✅ ${methodLabel}: Matched ${matchedCount} field(s)`);
+        setStatus(`Form auto-filled: ${matchedCount} field(s) matched${usedAI ? " using AI" : ""}`);
+      } else {
+        setOcrStatus("⚠️ No matching fields found");
+        setStatus("OCR completed but no fields matched. Check field names in your document.");
+      }
     }catch(err){
       setError(err.message);
-      setOcrStatus("OCR failed");
+      setOcrStatus("❌ OCR failed");
     }
     setOcrLoading(false);
     event.target.value = "";
@@ -610,13 +844,14 @@ export default function FormsPage(){
                 </button>
                 <button
                   type="button"
-                  className="btn btn-ghost"
+                  className="btn btn-primary"
                   onClick={speakText}
                   disabled={ttsLoading}
+                  style={{ padding: "10px 18px" }}
                 >
-                  {ttsLoading ? <><span className="spinner spinner-dark"></span></> : '🔊 Read Aloud'}
+                  {ttsLoading ? <><span className="spinner"></span></> : '🔊 Read Aloud'}
                 </button>
-                <label className="btn btn-ghost" style={{ cursor: "pointer" }}>
+                <label className="btn btn-primary" style={{ cursor: "pointer", padding: "10px 18px" }}>
                   📄 OCR Import
                   <input type="file" accept=".pdf,image/*" style={{ display: "none" }} onChange={handleOcrUpload} disabled={ocrLoading} />
                 </label>

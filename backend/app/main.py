@@ -26,7 +26,7 @@ _SESSIONS: Dict[str, Dict[str, str]] = {}
 from .db import get_db, init_db, seed_default_templates, SEED_TEMPLATES
 from .models import Base, FormTemplate, FormResponse
 from .services.ocr_service import extract_fields_from_document, generate_schema_from_document, get_tesseract_info
-from .services.llm_service import clean_text, generate_form_from_prompt, generate_form_with_ai
+from .services.llm_service import clean_text, generate_form_from_prompt, generate_form_with_ai, match_ocr_fields_with_ai
 from .services.pdf_service import fill_pdf_form, render_response_pdf
 from .services.tts_service import synthesize_speech
 from .services.stt_service import transcribe_audio, get_supported_languages, get_realtime_token
@@ -87,6 +87,11 @@ class TranslateRequest(BaseModel):
 
 class FormGenerationRequest(BaseModel):
     prompt: str
+
+
+class OcrMatchRequest(BaseModel):
+    ocr_fields: Dict[str, Any]
+    form_fields: list
 
 
 @app.on_event("startup")
@@ -267,6 +272,26 @@ async def ocr_extract(file: UploadFile = File(...)):
     except RuntimeError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     return data
+
+
+@app.post("/api/ocr/match")
+async def ocr_match_fields(req: OcrMatchRequest):
+    """
+    Use AI to intelligently match OCR extracted fields to form fields.
+    Returns a mapping of form_field_name -> extracted_value.
+    """
+    if not req.ocr_fields or not req.form_fields:
+        raise HTTPException(status_code=400, detail="Both ocr_fields and form_fields are required")
+    
+    try:
+        matched = match_ocr_fields_with_ai(req.ocr_fields, req.form_fields)
+        return {
+            "matched": matched,
+            "count": len(matched),
+            "ai_powered": True
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @app.post("/api/forms/ingest")

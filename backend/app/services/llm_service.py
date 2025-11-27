@@ -181,3 +181,98 @@ Use snake_case for names. Generate 3-8 relevant fields."""
     except Exception as e:
         print(f"AI generation failed: {e}, using heuristic")
         return generate_form_from_prompt(prompt)
+
+
+def match_ocr_fields_with_ai(ocr_fields: Dict[str, Any], form_fields: List[Dict[str, Any]]) -> Dict[str, str]:
+    """
+    Uses Hugging Face AI to intelligently match OCR extracted fields to form fields.
+    Returns a mapping of form_field_name -> extracted_value
+    """
+    hf_token = os.getenv("HF_TOKEN")
+    
+    if not hf_token or not ocr_fields or not form_fields:
+        return {}
+    
+    try:
+        from openai import OpenAI
+        
+        client = OpenAI(
+            base_url="https://router.huggingface.co/v1",
+            api_key=hf_token,
+        )
+        
+        # Prepare form field info
+        form_field_info = []
+        for f in form_fields:
+            form_field_info.append({
+                "name": f.get("name"),
+                "label": f.get("label", f.get("name")),
+                "type": f.get("type", "text")
+            })
+        
+        system_prompt = """You are an intelligent OCR field matcher for Indian government forms and documents.
+
+Your task: Match extracted OCR data to the correct form fields.
+
+IMPORTANT CONTEXT for Indian documents:
+- "name" could match "applicant_name", "full_name", "candidate_name", etc.
+- "father" or "father's name" matches "father_name", "father_husband_name", etc.
+- "aadhaar", "aadhar", "uid" all refer to Aadhaar number
+- "dob" means date of birth
+- "mob", "mobile", "phone", "contact" are all phone numbers
+- "addr", "address", "residence" are addresses
+- "pin", "pincode", "postal code" are PIN codes
+- Consider Hindi transliterations and abbreviations
+
+Return ONLY a valid JSON object mapping form field names to extracted values.
+Format: {"form_field_name": "extracted_value", ...}
+
+Only include fields where you find a confident match. Skip uncertain matches.
+Do NOT include any explanation, markdown, or extra text - ONLY the JSON object."""
+
+        user_message = f"""OCR Extracted Data:
+{json.dumps(ocr_fields, indent=2)}
+
+Form Fields to Fill:
+{json.dumps(form_field_info, indent=2)}
+
+Match the extracted data to the form fields. Return JSON mapping."""
+
+        completion = client.chat.completions.create(
+            model="moonshotai/Kimi-K2-Thinking:novita",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            max_tokens=1000,
+            temperature=0.3  # Lower temperature for more consistent matching
+        )
+        
+        result_text = completion.choices[0].message.content.strip()
+        
+        # Extract JSON from response
+        if "```json" in result_text:
+            result_text = result_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in result_text:
+            result_text = result_text.split("```")[1].split("```")[0].strip()
+        
+        # Find JSON object
+        start_idx = result_text.find("{")
+        end_idx = result_text.rfind("}") + 1
+        if start_idx != -1 and end_idx > start_idx:
+            result_text = result_text[start_idx:end_idx]
+        
+        matched = json.loads(result_text)
+        
+        # Validate that matched keys are actual form field names
+        valid_field_names = {f.get("name") for f in form_fields}
+        validated = {}
+        for key, value in matched.items():
+            if key in valid_field_names and value:
+                validated[key] = str(value)
+        
+        return validated
+        
+    except Exception as e:
+        print(f"AI field matching failed: {e}")
+        return {}
