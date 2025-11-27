@@ -76,37 +76,58 @@ def _check_tesseract_available() -> bool:
 
 
 def _extract_text_from_pdf(file_bytes: bytes) -> str:
+    """Extract text from PDF - tries pdfplumber first, falls back to OCR for scanned PDFs."""
+    # First try pdfplumber (for text-based PDFs)
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         texts = [page.extract_text() or "" for page in pdf.pages]
-    combined = "\n".join(texts)
-    return combined.strip()
+    combined = "\n".join(texts).strip()
+    
+    # If we got meaningful text, return it
+    if len(combined) > 50:  # Arbitrary threshold for "meaningful" text
+        return combined
+    
+    # Otherwise, it might be a scanned PDF - try OCR.space (supports PDF directly)
+    if OCR_SPACE_API_KEY:
+        logger.info("PDF appears to be scanned, trying OCR.space...")
+        try:
+            return _extract_text_with_ocr_space(file_bytes, lang="eng", is_pdf=True)
+        except Exception as e:
+            logger.warning(f"OCR.space failed for PDF: {e}")
+    
+    # Return whatever pdfplumber found (might be empty for scanned PDFs)
+    return combined
 
 
-def _extract_text_with_ocr_space(file_bytes: bytes, lang: str = "eng") -> str:
+def _extract_text_with_ocr_space(file_bytes: bytes, lang: str = "eng", is_pdf: bool = False) -> str:
     """Extract text using OCR.space API (cloud-based).
     
     Args:
-        file_bytes: Image file content
+        file_bytes: Image or PDF file content
         lang: Language code (eng, hin)
+        is_pdf: Whether the file is a PDF
     """
     if not OCR_SPACE_API_KEY:
         raise RuntimeError("OCR_SPACE_API_KEY environment variable not set. Get a free key at https://ocr.space/ocrapi/freekey")
     
     # Convert to base64
-    base64_image = base64.b64encode(file_bytes).decode('utf-8')
+    base64_data = base64.b64encode(file_bytes).decode('utf-8')
     
     # Map language codes
     lang_map = {"eng": "eng", "hin": "hin", "eng+hin": "eng"}
     ocr_lang = lang_map.get(lang, "eng")
     
+    # Set correct MIME type
+    mime_type = "application/pdf" if is_pdf else "image/png"
+    
     payload = {
         "apikey": OCR_SPACE_API_KEY,
-        "base64Image": f"data:image/png;base64,{base64_image}",
+        "base64Image": f"data:{mime_type};base64,{base64_data}",
         "language": ocr_lang,
         "isOverlayRequired": False,
         "detectOrientation": True,
         "scale": True,
         "OCREngine": 2,  # Better for printed text
+        "filetype": "PDF" if is_pdf else "PNG",
     }
     
     try:
@@ -177,7 +198,7 @@ def _extract_text_from_image(file_bytes: bytes, lang: str = "eng") -> str:
     # Fall back to OCR.space API
     if OCR_SPACE_API_KEY:
         logger.info("Using OCR.space API")
-        return _extract_text_with_ocr_space(file_bytes, lang)
+        return _extract_text_with_ocr_space(file_bytes, lang, is_pdf=False)
     
     raise RuntimeError(
         "No OCR method available. Either install Tesseract locally or set OCR_SPACE_API_KEY environment variable. "
