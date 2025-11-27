@@ -17,22 +17,22 @@ export default function App(){
   const { t, language, setLanguage, languages } = useLanguage();
   const location = useLocation();
   const navigate = useNavigate();
-  const [accessibilityMode, setAccessibilityMode] = useState(()=>{
+  const [lightMode, setLightMode] = useState(()=>{
     if(typeof window === "undefined") return false;
-    return window.localStorage?.getItem("accessibilityMode") === "on";
+    return window.localStorage?.getItem("lightMode") === "on";
   });
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(()=>{
-    if(accessibilityMode){
-      document.body.classList.add("accessibility-mode");
-      window.localStorage?.setItem("accessibilityMode", "on");
+    if(lightMode){
+      document.body.classList.add("light-mode");
+      window.localStorage?.setItem("lightMode", "on");
     }else{
-      document.body.classList.remove("accessibility-mode");
-      window.localStorage?.setItem("accessibilityMode", "off");
+      document.body.classList.remove("light-mode");
+      window.localStorage?.setItem("lightMode", "off");
     }
-  }, [accessibilityMode]);
+  }, [lightMode]);
   const voiceNavRecognitionRef = useRef(null);
 
   useEffect(()=>{
@@ -86,7 +86,7 @@ export default function App(){
     
     // Action commands - English
     { pattern: /(toggle|switch).*(language|lang)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "हिंदी में बदला" : "Switched to English"); }, feedback: "Switching language" },
-    { pattern: /(toggle|switch).*(theme|mode|accessibility)/i, action: ()=>{ setAccessibilityMode(!accessibilityMode); speakFeedback(accessibilityMode ? "Accessibility mode off" : "Accessibility mode on"); }, feedback: "Toggling accessibility" },
+    { pattern: /(toggle|switch).*(theme|mode|light|dark)/i, action: ()=>{ setLightMode(!lightMode); speakFeedback(lightMode ? "Dark mode on" : "Light mode on"); }, feedback: "Toggling theme" },
     { pattern: /(stop|pause|end).*(listening|voice|navigation)/i, action: ()=>{ voiceNavRecognitionRef.current?.stop(); speakFeedback(language === "hi" ? "वॉइस नेविगेशन बंद" : "Voice navigation stopped"); }, feedback: "Stopping voice navigation" },
     { pattern: /(log\s*out|sign\s*out|logout)/i, action: ()=>{ logout(); speakFeedback(language === "hi" ? "लॉग आउट हो रहा है" : "Logging out"); }, feedback: "Logging out" },
     { pattern: /(go\s*back|back|previous)/i, action: ()=>{ navigate(-1); speakFeedback(language === "hi" ? "पीछे जा रहा हूं" : "Going back"); }, feedback: "Going back" },
@@ -97,7 +97,7 @@ export default function App(){
     // Action commands - Hindi
     { pattern: /(भाषा).*(बदलो|बदलें|चेंज)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "हिंदी में बदला" : "English में बदला"); }, feedback: "भाषा बदल रहा हूं" },
     { pattern: /(बदलो|बदलें|चेंज).*(भाषा)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "हिंदी में बदला" : "English में बदला"); }, feedback: "भाषा बदल रहा हूं" },
-    { pattern: /(थीम|मोड).*(बदलो|बदलें)/i, action: ()=>{ setAccessibilityMode(!accessibilityMode); speakFeedback(accessibilityMode ? "एक्सेसिबिलिटी मोड बंद" : "एक्सेसिबिलिटी मोड चालू"); }, feedback: "थीम बदल रहा हूं" },
+    { pattern: /(थीम|मोड).*(बदलो|बदलें)/i, action: ()=>{ setLightMode(!lightMode); speakFeedback(lightMode ? "डार्क मोड चालू" : "लाइट मोड चालू"); }, feedback: "थीम बदल रहा हूं" },
     { pattern: /(सुनना|वॉइस|आवाज़).*(बंद|रोको)/i, action: ()=>{ voiceNavRecognitionRef.current?.stop(); speakFeedback("वॉइस नेविगेशन बंद"); }, feedback: "बंद कर रहा हूं" },
     { pattern: /(लॉग\s*आउट|साइन\s*आउट|बाहर)/i, action: ()=>{ logout(); speakFeedback("लॉग आउट हो रहा है"); }, feedback: "लॉग आउट" },
     { pattern: /(पीछे|वापस|बैक)/i, action: ()=>{ navigate(-1); speakFeedback("पीछे जा रहा हूं"); }, feedback: "पीछे जा रहा हूं" },
@@ -108,7 +108,7 @@ export default function App(){
     // Help command - English & Hindi
     { pattern: /(help|commands|what can you do)/i, action: ()=>{ speakFeedback("Available commands: Open home, open overview, open OCR, open forms, open audio, open PDF fill, open AI tools, open contact, toggle language, toggle theme, go back, scroll up, scroll down, logout. Say open followed by page name."); }, feedback: "Listing commands" },
     { pattern: /(मदद|कमांड|क्या कर सकते)/i, action: ()=>{ speakFeedback("उपलब्ध कमांड: होम खोलो, अवलोकन खोलो, OCR खोलो, फॉर्म खोलो, वॉइस खोलो, PDF खोलो, AI खोलो, संपर्क खोलो, भाषा बदलो, थीम बदलो, पीछे जाओ, ऊपर स्क्रॉल, नीचे स्क्रॉल, लॉग आउट।"); }, feedback: "कमांड सूची" },
-  ], [navigate, role, language, accessibilityMode, logout, setLanguage]);
+  ], [navigate, role, language, lightMode, logout, setLanguage]);
 
   const handleVoiceCommand = (spoken)=>{
     const text = (spoken || "").trim();
@@ -352,11 +352,11 @@ export default function App(){
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            onClick={()=>setAccessibilityMode(value => !value)}
-            aria-pressed={accessibilityMode}
-            title={accessibilityMode ? "Switch to standard view" : "Switch to high contrast"}
+            onClick={()=>setLightMode(value => !value)}
+            aria-pressed={lightMode}
+            title={lightMode ? "Switch to dark mode" : "Switch to light mode"}
           >
-            {accessibilityMode ? "☀️" : "🌙"}
+            {lightMode ? "🌙" : "☀️"}
           </button>
           <button
             type="button"
