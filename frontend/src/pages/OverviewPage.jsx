@@ -229,15 +229,15 @@ export default function OverviewPage() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 12,
+                  gap: 8,
                   padding: 14,
                   background: "var(--bg-subtle)",
                   borderRadius: 10,
                   border: "1px solid var(--border)"
                 }}
               >
-                <span style={{ fontSize: 22 }}>{tech.icon}</span>
-                <div>
+                <span style={{ fontSize: 22, display: "flex", alignItems: "center", justifyContent: "center", width: 32, height: 32 }}>{tech.icon}</span>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <strong style={{ fontSize: 13 }}>{tech.name}</strong>
                   <p className="muted" style={{ fontSize: 11, margin: 0 }}>{tech.desc}</p>
                 </div>
