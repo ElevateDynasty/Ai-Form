@@ -285,10 +285,10 @@ export default function App(){
               <p style={{margin:0,fontSize:12,color:"var(--muted)"}}>{t("logged_in_as")}</p>
               <p style={{margin:0,fontSize:13,fontWeight:600,textTransform:"capitalize"}}>{role ?? "User"}</p>
             </div>
+            <button className="btn btn-ghost btn-sm" onClick={logout} title={t("logout")} style={{marginLeft:8}}>
+              {t("logout")}
+            </button>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={logout} title={t("logout")}>
-            {t("logout")}
-          </button>
         </div>
       </header>
 
