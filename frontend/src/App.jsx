@@ -54,29 +54,60 @@ export default function App(){
   };
 
   const commandHandlers = useMemo(()=>[
-    // Navigation commands
-    { pattern: /(go|open|navigate).*(home|dashboard|main)/i, action: ()=>{ navigate("/"); speakFeedback("Opening Home"); }, feedback: "Opening Home" },
-    { pattern: /(go|open|navigate).*(overview|about)/i, action: ()=>{ navigate("/overview"); speakFeedback("Opening Overview"); }, feedback: "Opening Overview" },
-    { pattern: /(go|open|navigate).*(ocr|scanner|document)/i, action: ()=>{ navigate("/ocr"); speakFeedback("Opening OCR Scanner"); }, feedback: "Opening OCR Scanner" },
-    { pattern: /(go|open|navigate).*(voice|audio|speech)/i, action: ()=>{ navigate("/audio"); speakFeedback("Opening Voice Tools"); }, feedback: "Opening Voice Tools" },
-    { pattern: /(go|open|navigate).*(form|forms)/i, action: ()=>{ navigate("/forms"); speakFeedback("Opening Forms"); }, feedback: "Opening Forms" },
-    { pattern: /(go|open|navigate).*(pdf|fill pdf)/i, action: ()=>{ navigate("/pdf-fill"); speakFeedback("Opening PDF Fill"); }, feedback: "Opening PDF Fill" },
-    { pattern: /(go|open|navigate).*(ai|text processing|llm)/i, action: ()=>{ navigate("/llm"); speakFeedback("Opening AI Tools"); }, feedback: "Opening AI Tools" },
-    { pattern: /(go|open|navigate).*(contact|help|support)/i, action: ()=>{ navigate("/contact"); speakFeedback("Opening Contact"); }, feedback: "Opening Contact" },
-    { pattern: /(go|open|navigate).*(manage|admin|templates)/i, action: ()=>{ if(role === "admin"){ navigate("/forms/manage"); speakFeedback("Opening Form Manager"); } else { speakFeedback("Admin access required"); } }, feedback: "Opening Form Manager" },
+    // Navigation commands - English
+    { pattern: /(go|open|navigate).*(home|dashboard|main)/i, action: ()=>{ navigate("/"); speakFeedback(language === "hi" ? "होम खोल रहा हूं" : "Opening Home"); }, feedback: "Opening Home" },
+    { pattern: /(go|open|navigate).*(overview|about)/i, action: ()=>{ navigate("/overview"); speakFeedback(language === "hi" ? "अवलोकन खोल रहा हूं" : "Opening Overview"); }, feedback: "Opening Overview" },
+    { pattern: /(go|open|navigate).*(ocr|scanner|document)/i, action: ()=>{ navigate("/ocr"); speakFeedback(language === "hi" ? "OCR स्कैनर खोल रहा हूं" : "Opening OCR Scanner"); }, feedback: "Opening OCR Scanner" },
+    { pattern: /(go|open|navigate).*(voice|audio|speech)/i, action: ()=>{ navigate("/audio"); speakFeedback(language === "hi" ? "वॉइस टूल्स खोल रहा हूं" : "Opening Voice Tools"); }, feedback: "Opening Voice Tools" },
+    { pattern: /(go|open|navigate).*(form|forms)/i, action: ()=>{ navigate("/forms"); speakFeedback(language === "hi" ? "फॉर्म खोल रहा हूं" : "Opening Forms"); }, feedback: "Opening Forms" },
+    { pattern: /(go|open|navigate).*(pdf|fill pdf)/i, action: ()=>{ navigate("/pdf-fill"); speakFeedback(language === "hi" ? "PDF फिल खोल रहा हूं" : "Opening PDF Fill"); }, feedback: "Opening PDF Fill" },
+    { pattern: /(go|open|navigate).*(ai|text processing|llm)/i, action: ()=>{ navigate("/llm"); speakFeedback(language === "hi" ? "AI टूल्स खोल रहा हूं" : "Opening AI Tools"); }, feedback: "Opening AI Tools" },
+    { pattern: /(go|open|navigate).*(contact|help|support)/i, action: ()=>{ navigate("/contact"); speakFeedback(language === "hi" ? "संपर्क खोल रहा हूं" : "Opening Contact"); }, feedback: "Opening Contact" },
+    { pattern: /(go|open|navigate).*(manage|admin|templates)/i, action: ()=>{ if(role === "admin"){ navigate("/forms/manage"); speakFeedback(language === "hi" ? "फॉर्म मैनेजर खोल रहा हूं" : "Opening Form Manager"); } else { speakFeedback(language === "hi" ? "एडमिन एक्सेस चाहिए" : "Admin access required"); } }, feedback: "Opening Form Manager" },
     
-    // Action commands
-    { pattern: /(toggle|switch).*(language|lang)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "Switched to Hindi" : "Switched to English"); }, feedback: "Switching language" },
+    // Navigation commands - Hindi
+    { pattern: /(होम|मुख्य|डैशबोर्ड).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/"); speakFeedback("होम खोल रहा हूं"); }, feedback: "होम खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(होम|मुख्य|डैशबोर्ड)/i, action: ()=>{ navigate("/"); speakFeedback("होम खोल रहा हूं"); }, feedback: "होम खोल रहा हूं" },
+    { pattern: /(अवलोकन|ओवरव्यू).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/overview"); speakFeedback("अवलोकन खोल रहा हूं"); }, feedback: "अवलोकन खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(अवलोकन|ओवरव्यू)/i, action: ()=>{ navigate("/overview"); speakFeedback("अवलोकन खोल रहा हूं"); }, feedback: "अवलोकन खोल रहा हूं" },
+    { pattern: /(स्कैनर|OCR|दस्तावेज़).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/ocr"); speakFeedback("OCR स्कैनर खोल रहा हूं"); }, feedback: "OCR खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(स्कैनर|OCR|दस्तावेज़)/i, action: ()=>{ navigate("/ocr"); speakFeedback("OCR स्कैनर खोल रहा हूं"); }, feedback: "OCR खोल रहा हूं" },
+    { pattern: /(वॉइस|ऑडियो|आवाज़).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/audio"); speakFeedback("वॉइस टूल्स खोल रहा हूं"); }, feedback: "वॉइस खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(वॉइस|ऑडियो|आवाज़)/i, action: ()=>{ navigate("/audio"); speakFeedback("वॉइस टूल्स खोल रहा हूं"); }, feedback: "वॉइस खोल रहा हूं" },
+    { pattern: /(फॉर्म|फार्म).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/forms"); speakFeedback("फॉर्म खोल रहा हूं"); }, feedback: "फॉर्म खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(फॉर्म|फार्म)/i, action: ()=>{ navigate("/forms"); speakFeedback("फॉर्म खोल रहा हूं"); }, feedback: "फॉर्म खोल रहा हूं" },
+    { pattern: /(PDF|पीडीएफ).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/pdf-fill"); speakFeedback("PDF फिल खोल रहा हूं"); }, feedback: "PDF खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(PDF|पीडीएफ)/i, action: ()=>{ navigate("/pdf-fill"); speakFeedback("PDF फिल खोल रहा हूं"); }, feedback: "PDF खोल रहा हूं" },
+    { pattern: /(AI|एआई|टेक्स्ट).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/llm"); speakFeedback("AI टूल्स खोल रहा हूं"); }, feedback: "AI खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(AI|एआई)/i, action: ()=>{ navigate("/llm"); speakFeedback("AI टूल्स खोल रहा हूं"); }, feedback: "AI खोल रहा हूं" },
+    { pattern: /(संपर्क|कॉन्टैक्ट|मदद).*(खोलो|खोलें|जाओ)/i, action: ()=>{ navigate("/contact"); speakFeedback("संपर्क खोल रहा हूं"); }, feedback: "संपर्क खोल रहा हूं" },
+    { pattern: /(खोलो|खोलें|जाओ).*(संपर्क|कॉन्टैक्ट|मदद)/i, action: ()=>{ navigate("/contact"); speakFeedback("संपर्क खोल रहा हूं"); }, feedback: "संपर्क खोल रहा हूं" },
+    { pattern: /(मैनेज|एडमिन|टेम्पलेट).*(खोलो|खोलें|जाओ)/i, action: ()=>{ if(role === "admin"){ navigate("/forms/manage"); speakFeedback("फॉर्म मैनेजर खोल रहा हूं"); } else { speakFeedback("एडमिन एक्सेस चाहिए"); } }, feedback: "मैनेजर खोल रहा हूं" },
+    
+    // Action commands - English
+    { pattern: /(toggle|switch).*(language|lang)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "हिंदी में बदला" : "Switched to English"); }, feedback: "Switching language" },
     { pattern: /(toggle|switch).*(theme|mode|accessibility)/i, action: ()=>{ setAccessibilityMode(!accessibilityMode); speakFeedback(accessibilityMode ? "Accessibility mode off" : "Accessibility mode on"); }, feedback: "Toggling accessibility" },
-    { pattern: /(stop|pause|end).*(listening|voice|navigation)/i, action: ()=>{ voiceNavRecognitionRef.current?.stop(); speakFeedback("Voice navigation stopped"); }, feedback: "Stopping voice navigation" },
-    { pattern: /(log\s*out|sign\s*out|logout)/i, action: ()=>{ logout(); speakFeedback("Logging out"); }, feedback: "Logging out" },
-    { pattern: /(go\s*back|back|previous)/i, action: ()=>{ navigate(-1); speakFeedback("Going back"); }, feedback: "Going back" },
-    { pattern: /(scroll\s*up|page\s*up)/i, action: ()=>{ window.scrollBy(0, -300); speakFeedback("Scrolling up"); }, feedback: "Scrolling up" },
-    { pattern: /(scroll\s*down|page\s*down)/i, action: ()=>{ window.scrollBy(0, 300); speakFeedback("Scrolling down"); }, feedback: "Scrolling down" },
-    { pattern: /(scroll\s*top|go\s*to\s*top)/i, action: ()=>{ window.scrollTo(0, 0); speakFeedback("Scrolled to top"); }, feedback: "Scrolling to top" },
+    { pattern: /(stop|pause|end).*(listening|voice|navigation)/i, action: ()=>{ voiceNavRecognitionRef.current?.stop(); speakFeedback(language === "hi" ? "वॉइस नेविगेशन बंद" : "Voice navigation stopped"); }, feedback: "Stopping voice navigation" },
+    { pattern: /(log\s*out|sign\s*out|logout)/i, action: ()=>{ logout(); speakFeedback(language === "hi" ? "लॉग आउट हो रहा है" : "Logging out"); }, feedback: "Logging out" },
+    { pattern: /(go\s*back|back|previous)/i, action: ()=>{ navigate(-1); speakFeedback(language === "hi" ? "पीछे जा रहा हूं" : "Going back"); }, feedback: "Going back" },
+    { pattern: /(scroll\s*up|page\s*up)/i, action: ()=>{ window.scrollBy(0, -300); speakFeedback(language === "hi" ? "ऊपर स्क्रॉल कर रहा हूं" : "Scrolling up"); }, feedback: "Scrolling up" },
+    { pattern: /(scroll\s*down|page\s*down)/i, action: ()=>{ window.scrollBy(0, 300); speakFeedback(language === "hi" ? "नीचे स्क्रॉल कर रहा हूं" : "Scrolling down"); }, feedback: "Scrolling down" },
+    { pattern: /(scroll\s*top|go\s*to\s*top)/i, action: ()=>{ window.scrollTo(0, 0); speakFeedback(language === "hi" ? "ऊपर गया" : "Scrolled to top"); }, feedback: "Scrolling to top" },
     
-    // Help command
+    // Action commands - Hindi
+    { pattern: /(भाषा).*(बदलो|बदलें|चेंज)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "हिंदी में बदला" : "English में बदला"); }, feedback: "भाषा बदल रहा हूं" },
+    { pattern: /(बदलो|बदलें|चेंज).*(भाषा)/i, action: ()=>{ setLanguage(language === "en" ? "hi" : "en"); speakFeedback(language === "en" ? "हिंदी में बदला" : "English में बदला"); }, feedback: "भाषा बदल रहा हूं" },
+    { pattern: /(थीम|मोड).*(बदलो|बदलें)/i, action: ()=>{ setAccessibilityMode(!accessibilityMode); speakFeedback(accessibilityMode ? "एक्सेसिबिलिटी मोड बंद" : "एक्सेसिबिलिटी मोड चालू"); }, feedback: "थीम बदल रहा हूं" },
+    { pattern: /(सुनना|वॉइस|आवाज़).*(बंद|रोको)/i, action: ()=>{ voiceNavRecognitionRef.current?.stop(); speakFeedback("वॉइस नेविगेशन बंद"); }, feedback: "बंद कर रहा हूं" },
+    { pattern: /(लॉग\s*आउट|साइन\s*आउट|बाहर)/i, action: ()=>{ logout(); speakFeedback("लॉग आउट हो रहा है"); }, feedback: "लॉग आउट" },
+    { pattern: /(पीछे|वापस|बैक)/i, action: ()=>{ navigate(-1); speakFeedback("पीछे जा रहा हूं"); }, feedback: "पीछे जा रहा हूं" },
+    { pattern: /(ऊपर).*(स्क्रॉल)/i, action: ()=>{ window.scrollBy(0, -300); speakFeedback("ऊपर स्क्रॉल कर रहा हूं"); }, feedback: "ऊपर स्क्रॉल" },
+    { pattern: /(नीचे).*(स्क्रॉल)/i, action: ()=>{ window.scrollBy(0, 300); speakFeedback("नीचे स्क्रॉल कर रहा हूं"); }, feedback: "नीचे स्क्रॉल" },
+    { pattern: /(सबसे\s*ऊपर|टॉप)/i, action: ()=>{ window.scrollTo(0, 0); speakFeedback("सबसे ऊपर गया"); }, feedback: "सबसे ऊपर" },
+    
+    // Help command - English & Hindi
     { pattern: /(help|commands|what can you do)/i, action: ()=>{ speakFeedback("Available commands: Open home, open overview, open OCR, open forms, open audio, open PDF fill, open AI tools, open contact, toggle language, toggle theme, go back, scroll up, scroll down, logout. Say open followed by page name."); }, feedback: "Listing commands" },
+    { pattern: /(मदद|कमांड|क्या कर सकते)/i, action: ()=>{ speakFeedback("उपलब्ध कमांड: होम खोलो, अवलोकन खोलो, OCR खोलो, फॉर्म खोलो, वॉइस खोलो, PDF खोलो, AI खोलो, संपर्क खोलो, भाषा बदलो, थीम बदलो, पीछे जाओ, ऊपर स्क्रॉल, नीचे स्क्रॉल, लॉग आउट।"); }, feedback: "कमांड सूची" },
   ], [navigate, role, language, accessibilityMode, logout, setLanguage]);
 
   const handleVoiceCommand = (spoken)=>{
