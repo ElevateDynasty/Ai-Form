@@ -6,7 +6,6 @@
 ![Python](https://img.shields.io/badge/python-3.10+-green.svg)
 ![Node](https://img.shields.io/badge/node-16+-green.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-![Gemini](https://img.shields.io/badge/Gemini-AI%20Powered-blue.svg)
 
 **An elegant, AI-powered form processing platform with OCR, voice input, smart form generation, and bilingual support (English/Hindi).**
 
@@ -24,7 +23,7 @@
 | 🎤 **Voice Input** | Browser-based speech-to-text for hands-free form filling |
 | 🔊 **Text-to-Speech** | Convert text to natural audio in English & Hindi |
 | 🤖 **AI Text Processing** | Clean, summarize, and extract key phrases using tinyBART |
-| ✨ **Gemini AI Integration** | Smart form generation from natural language prompts |
+| ✨ **Smart Form Generation** | Create forms from natural language prompts using keyword detection |
 | 🌐 **Bilingual Support** | Full English/Hindi translation throughout the app |
 | 📝 **Visual Form Builder** | Admin interface to create and manage form templates |
 | 📑 **PDF Auto-Fill** | Merge JSON data with fillable PDF templates |
@@ -45,8 +44,7 @@ AI-FORM/
 │   │       ├── tts_service.py    # Text-to-speech
 │   │       ├── bart_service.py   # AI text processing
 │   │       ├── pdf_service.py    # PDF operations
-│   │       ├── llm_service.py    # LLM integrations
-│   │       └── gemini_service.py # Gemini AI for smart generation
+│   │       └── llm_service.py    # LLM integrations
 │   └── requirements.txt
 │
 ├── frontend/                   # React + Vite frontend
@@ -142,13 +140,6 @@ npm run dev
 | `/api/llm/key_phrases` | POST | Extract key phrases |
 | `/api/llm/translate` | POST | Translate between English ↔ Hindi |
 
-### Gemini AI (Smart Generation)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/gemini/generate-form` | POST | Generate form schema from natural language prompt |
-| `/api/gemini/enhance-text` | POST | AI-powered text enhancement |
-
 ### Form Management
 
 | Endpoint | Method | Auth | Description |
@@ -232,7 +223,6 @@ The services in `backend/app/services/` are designed to be swappable:
 | OCR | PyPDF2 + basic parsing | Tesseract, Google Vision, AWS Textract |
 | TTS | gTTS | Azure Speech, ElevenLabs |
 | AI/LLM | tinyBART (local) | OpenAI GPT, Anthropic Claude |
-| Smart Gen | Gemini 1.5 Flash | GPT-4, Claude |
 | Translation | Helsinki-NLP opus-mt | Google Translate, DeepL |
 | STT | Browser Web Speech API | Whisper, Azure Speech |
 

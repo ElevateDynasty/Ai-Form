@@ -63,8 +63,6 @@ export default function AdminFormsPage(){
   const [promptText, setPromptText] = useState("");
   const [promptLoading, setPromptLoading] = useState(false);
   const [promptStatus, setPromptStatus] = useState("");
-  const [geminiLoading, setGeminiLoading] = useState(false);
-  const [geminiStatus, setGeminiStatus] = useState("");
 
   const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
 
@@ -94,7 +92,6 @@ export default function AdminFormsPage(){
     setIngestStatus("");
     setPromptText("");
     setPromptStatus("");
-    setGeminiStatus("");
   };
 
   async function handleSubmit(e){
@@ -327,43 +324,6 @@ export default function AdminFormsPage(){
     setPromptLoading(false);
   };
 
-  const handleGeminiGenerate = async () => {
-    if (!promptText.trim()) {
-      setError("Enter a prompt to generate form");
-      return;
-    }
-    setError("");
-    setGeminiStatus("🤖 Gemini AI is generating your form...");
-    setGeminiLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/gemini/generate-form`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeader },
-        body: JSON.stringify({ prompt: promptText }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ detail: "Unable to generate form with Gemini" }));
-        throw new Error(err.detail || "Unable to generate form with Gemini");
-      }
-      const data = await res.json();
-      const schema = data.schema || {};
-      const normalized = normalizeSchema(schema);
-      setFormState(prev => ({
-        ...prev,
-        fields: normalized.fields,
-        meta: normalized.meta,
-      }));
-      const sourceLabel = data.source === "fallback" ? "keyword" : "Gemini AI";
-      setGeminiStatus(`✨ Generated ${normalized.fields.length} fields with ${sourceLabel}`);
-      setPromptStatus("");
-    } catch (err) {
-      console.error("Gemini generate error:", err);
-      setError(err.message || "Gemini generation failed");
-      setGeminiStatus("❌ Gemini generation failed - try keyword Generate");
-    }
-    setGeminiLoading(false);
-  };
-
   const handleTranslate = async (text, callback) => {
     if (!text || !text.trim()) return;
     try {
@@ -480,11 +440,11 @@ export default function AdminFormsPage(){
             border: "1px solid rgba(16,185,129,0.2)"
           }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <h4 style={{ margin: 0, fontSize: 15 }}>🤖 AI Smart Form Generation</h4>
-              {(promptLoading || geminiLoading) && <span className="badge warning animate-pulse">Generating...</span>}
+              <h4 style={{ margin: 0, fontSize: 15 }}>🤖 Smart Form Generation</h4>
+              {promptLoading && <span className="badge warning animate-pulse">Generating...</span>}
             </div>
             <p className="muted" style={{ fontSize: 13, marginBottom: 14 }}>
-              Describe the form you want in plain English. Gemini AI will create comprehensive fields automatically.
+              Describe the form you want in plain English. AI will create fields automatically based on keywords.
             </p>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               <input
@@ -492,9 +452,9 @@ export default function AdminFormsPage(){
                 value={promptText}
                 onChange={(e) => setPromptText(e.target.value)}
                 placeholder="e.g., Create a job application form with personal details, experience, and skills"
-                disabled={promptLoading || geminiLoading}
+                disabled={promptLoading}
                 style={{ flex: 1, minWidth: 250 }}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleGeminiGenerate())}
+                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handlePromptGenerate())}
               />
               <button 
                 type="button" 
@@ -504,23 +464,13 @@ export default function AdminFormsPage(){
                   color: "white",
                   border: "none"
                 }}
-                onClick={handleGeminiGenerate}
-                disabled={geminiLoading}
-              >
-                ✨ AI Generate (Gemini)
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
                 onClick={handlePromptGenerate}
                 disabled={promptLoading}
-                title="Basic keyword-based generation"
               >
-                Basic
+                ✨ Generate Form
               </button>
             </div>
-            {geminiStatus && <p style={{ fontSize: 13, marginTop: 12, color: "#059669" }}>{geminiStatus}</p>}
-            {promptStatus && !geminiStatus && <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>{promptStatus}</p>}
+            {promptStatus && <p className="muted" style={{ fontSize: 13, marginTop: 12 }}>{promptStatus}</p>}
           </div>
 
           {/* Document Import */}
